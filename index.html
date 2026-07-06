@@ -21,24 +21,29 @@
         .error-box { margin-top: 30px; padding: 15px; background-color: #fff0f0; border-left: 5px solid #d9383a; color: #d9383a; border-radius: 4px; font-weight: bold; }
         .notice { font-size: 11px; color: #777; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px; }
     </style>
+    <!-- さっき作ったデータファイルを読み込む -->
+    <script src="data.js"></script>
 </head>
 <body>
 
 <div class="container">
     <h2>ながおテクノ<br>自動見積もり窓口</h2>
-    <p class="subtitle">1万6000件の品番に対応。24時間いつでも目安金額をご確認いただけます。</p>
+    <p class="subtitle">お持ちの品番と合言葉を入力するだけで、いつでも目安金額をご確認いただけます。</p>
 
+    <!-- 合言葉入力 -->
     <div class="form-group">
         <label>🔑 取引先様用 合言葉（お持ちの方のみ）</label>
-        <input type="text" id="passcode" placeholder="nagao1, nagao3, nagao4 など" oninput="searchPart()">
+        <input type="text" id="passcode" placeholder="例: nagao1 など" oninput="searchPart()">
         <div id="company-alert" class="company-name"></div>
     </div>
 
+    <!-- 品番検索入力 -->
     <div class="form-group">
         <label>🔍 品番を入力してください（ハイフンなしでもOK）</label>
-        <input type="text" id="part-number" placeholder="例: 44200-58021" oninput="searchPart()">
+        <input type="text" id="part-number" placeholder="例: 44320-35620" oninput="searchPart()">
     </div>
 
+    <!-- 結果エリア -->
     <div id="result-box" class="result-box" style="display: none;">
         <h3>📋 お見積もり結果（目安）</h3>
         <div class="result-item">
@@ -60,47 +65,13 @@
         <p class="notice">※正確な最新在庫と確定金額は、翌営業日にLINEまたはお電話にて改めてご連絡いたします。</p>
     </div>
 
+    <!-- 未検出エリア -->
     <div id="error-box" class="error-box" style="display: none;">
         該当する品番が見つかりませんでした。お手数ですが、LINE窓口へ直接お問い合わせください。
     </div>
 </div>
 
 <script>
-// CSVデータを保持する変数
-let csvData = [];
-
-// ページを開いたときにCSVファイルを読み込む
-window.onload = function() {
-    fetch('data.csv')
-        .then(response => response.text())
-        .then(text => {
-            csvData = parseCSV(text);
-        }).catch(err => {
-            console.error("CSVファイルの読み込みに失敗しました。ファイル名が 'data.csv' か確認してください。");
-        });
-};
-
-// 簡易的なCSVパース関数
-function parseCSV(text) {
-    let lines = text.split('\n');
-    let result = [];
-    for(let i = 1; i < lines.length; i++) {
-        let currentline = lines[i].split(',');
-        if(currentline.length >= 6) {
-            result.push({
-                id: currentline[0].replace(/-/g, "").toLowerCase().trim(), // ハイフンを除去して比較用にする
-                originalId: currentline[0].trim(),
-                name: currentline[1].trim(),
-                priceDefault: currentline[2].trim(),
-                priceAB: currentline[3].trim(),
-                priceC: currentline[4].trim(),
-                priceDE: currentline[5].trim()
-            });
-        }
-    }
-    return result;
-}
-
 function searchPart() {
     let pass = document.getElementById("passcode").value.toLowerCase().trim();
     let searchInput = document.getElementById("part-number").value.replace(/-/g, "").toLowerCase().trim();
@@ -111,41 +82,38 @@ function searchPart() {
     let priceDisplay = document.getElementById("price-display");
     let nameDisplay = document.getElementById("part-name-display");
 
-    // 初期化
     alertBox.innerText = "";
     resultBox.style.display = "none";
     errorBox.style.display = "none";
 
-    // ランクの判定
     let rank = "default";
     if (pass === "nagao1") {
         alertBox.innerText = "適用中：A・Bランク会員様価格";
-        rank = "AB";
+        rank = "ab";
     } else if (pass === "nagao3") {
         alertBox.innerText = "適用中：Cランク会員様価格";
-        rank = "C";
+        rank = "c";
     } else if (pass === "nagao4") {
         alertBox.innerText = "適用中：D・Eランク会員様価格";
-        rank = "DE";
+        rank = "de";
     } else if (pass !== "") {
         alertBox.innerText = "※合言葉を確認中（一般価格を表示しています）";
     }
 
-    // 入力文字数が少なすぎる場合は検索しない
     if (searchInput.length < 3) return;
 
-    // 1万6000件から一瞬で検索
-    let hit = csvData.find(item => item.id === searchInput);
+    // data.jsからデータを検索
+    if (!window.partsData) return;
+    let hit = window.partsData.find(item => item.id === searchInput);
 
     if (hit) {
-        nameDisplay.innerText = hit.name + " [" + hit.originalId + "]";
+        nameDisplay.innerText = hit.name + " [" + hit.org + "]";
         
-        let finalPrice = hit.priceDefault;
-        if (rank === "AB") finalPrice = hit.priceAB;
-        if (rank === "C") finalPrice = hit.priceC;
-        if (rank === "DE") finalPrice = hit.priceDE;
+        let finalPrice = hit.c; // デフォルトは一般（Cランクと同じ）
+        if (rank === "ab") finalPrice = hit.ab;
+        if (rank === "c") finalPrice = hit.c;
+        if (rank === "de") finalPrice = hit.de;
 
-        // 金額をコンマ区切りにする
         priceDisplay.innerText = "¥" + Number(finalPrice).toLocaleString();
         resultBox.style.display = "block";
     } else {
