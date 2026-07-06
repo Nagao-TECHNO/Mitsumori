@@ -54,8 +54,10 @@
 </div>
 
 <script>
-// 確実に動作するデータ構造
+// ながおテクノ 厳選本格単価データベース（主要品番を網羅）
 const priceMaster = {
+    // パワステポンプ（画像にあった22640、その他主要品番）
+    "4432022640": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-22640", rankA: 14000, rankC: 15000, rankD: 16000 },
     "4432035620": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-35620", rankA: 7000, rankC: 8000, rankD: 9000 },
     "4432012071": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12071", rankA: 10000, rankC: 11000, rankD: 12000 },
     "4431032300": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-32300", rankA: 7000, rankC: 8000, rankD: 9000 },
@@ -63,18 +65,27 @@ const priceMaster = {
     "4431042070": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-42070", rankA: 7000, rankC: 8000, rankD: 9000 },
     "4432028120": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-28120", rankA: 11000, rankC: 12000, rankD: 13000 },
     "4431028240": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-28240", rankA: 10500, rankC: 11500, rankD: 12500 },
+    
+    // A/Cコンプレッサー
     "88320b2060": { name: "A/Cｺﾝﾌﾟﾚｯｻｰ", org: "88320-B2060", rankA: 19000, rankC: 21000, rankD: 22000 },
     "8832097508": { name: "A/Cｺﾝﾌﾟﾚｯｻｰ", org: "88320-97508", rankA: 13000, rankC: 15000, rankD: 15000 },
     "88320b5010": { name: "A/Cｺﾝﾌﾟﾚｯｻｰ", org: "88320-B5010", rankA: 19000, rankC: 21000, rankD: 22000 },
     "88310e0020": { name: "A/Cｺﾝﾌﾟﾚｯｻｰ", org: "88310-E0020", rankA: 26000, rankC: 28500, rankD: 30000 },
+    "88310b2190": { name: "A/Cｺﾝﾌﾟﾚｯｻｰ", org: "88310-B2190", rankA: 19000, rankC: 21000, rankD: 22000 },
+    
+    // オルタネーター・セルモーター
+    "27060b2010": { name: "ｵﾙﾀﾈｰﾀｰ", org: "27060-B2010", rankA: 12000, rankC: 13500, rankD: 14500 },
+    "2706028300": { name: "ｵﾙﾀﾈｰﾀｰ", org: "27060-28300", rankA: 15000, rankC: 16500, rankD: 18000 },
+    "2810028051": { name: "ｾﾙﾓｰﾀｰ", org: "28100-28051", rankA: 11000, rankC: 12000, rankD: 13000 },
+    "28100b2030": { name: "ｾﾙﾓｰﾀｰ", org: "28100-B2030", rankA: 10000, rankC: 11000, rankD: 12000 },
+
+    // 触媒・排気系・その他高額部品
     "18450e0390": { name: "触媒ｺﾝﾊﾞｰﾀｰ", org: "18450-E0390", rankA: 180000, rankC: 193000, rankD: 193000 },
     "s1850e0621": { name: "触媒(洗浄ﾘﾋﾞﾙﾄ)", org: "S1850-E0621", rankA: 92700, rankC: 92700, rankD: 101970 },
     "me361050": { name: "ﾕﾘｱﾓｼﾞｭﾚｰﾀｰ", org: "ME361050", rankA: 88400, rankC: 88400, rankD: 97240 },
     "4321129026": { name: "ﾌﾛﾝﾄﾅｯｸﾙ", org: "43211-29026", rankA: 28000, rankC: 28000, rankD: 29400 },
     "23300e0030": { name: "ｻﾌﾟﾗｲﾎﾟﾝﾌﾟ", org: "23300-E0030", rankA: 48000, rankC: 52000, rankD: 55000 },
     "2367030010": { name: "ｲﾝｼﾞｪｸﾀｰ", org: "23670-30010", rankA: 17500, rankC: 19000, rankD: 20000 },
-    "27060b2010": { name: "ｵﾙﾀﾈｰﾀｰ", org: "27060-B2010", rankA: 12000, rankC: 13500, rankD: 14500 },
-    "2810028051": { name: "ｾﾙﾓｰﾀｰ", org: "28100-28051", rankA: 11000, rankC: 12000, rankD: 13000 },
     "43410b2330": { name: "ﾄﾞﾗｲﾌﾞｼｬﾌﾄ", org: "43410-B2330", rankA: 7500, rankC: 8500, rankD: 9000 },
     "17201e0740": { name: "ﾀｰﾎﾞﾁｬｰｼﾞｬｰ", org: "17201-E0740", rankA: 54000, rankC: 59000, rankD: 62000 },
     "26100e0010": { name: "EGRﾊﾞﾙﾌﾞ", org: "26100-E0010", rankA: 19500, rankC: 21500, rankD: 23000 },
@@ -98,7 +109,6 @@ function searchPart() {
     let alertBox = document.getElementById("company-alert"), resultBox = document.getElementById("result-box"), errorBox = document.getElementById("error-box");
     alertBox.innerText = ""; resultBox.style.display = "none"; errorBox.style.display = "none";
 
-    // バグを起こさない安全な価格分岐判定
     let selectRank = "rankC";
     if (pass === "nagao1") { alertBox.innerText = "適用中：優待価格プランA/B"; selectRank = "rankA"; }
     else if (pass === "nagao3") { alertBox.innerText = "適用中：優待価格プランC"; selectRank = "rankC"; }
