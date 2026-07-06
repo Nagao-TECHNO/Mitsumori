@@ -21,7 +21,7 @@
         .error-box { margin-top: 30px; padding: 15px; background-color: #fff0f0; border-left: 5px solid #d9383a; color: #d9383a; border-radius: 4px; font-weight: bold; }
         .notice { font-size: 11px; color: #777; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px; }
     </style>
-    <!-- さっき作ったデータファイルを読み込む -->
+    <!-- データファイルを読み込む -->
     <script src="data.js"></script>
 </head>
 <body>
@@ -33,7 +33,7 @@
     <!-- 合言葉入力 -->
     <div class="form-group">
         <label>🔑 取引先様用 合言葉（お持ちの方のみ）</label>
-        <input type="text" id="passcode" placeholder="例: nagao1 など" oninput="searchPart()">
+        <input type="text" id="passcode" placeholder="合言葉をお持ちの場合は入力してください" oninput="searchPart()">
         <div id="company-alert" class="company-name"></div>
     </div>
 
@@ -88,13 +88,13 @@ function searchPart() {
 
     let rank = "default";
     if (pass === "nagao1") {
-        alertBox.innerText = "適用中：A・Bランク会員様価格";
+        alertBox.innerText = "適用中：優待価格プランA";
         rank = "ab";
     } else if (pass === "nagao3") {
-        alertBox.innerText = "適用中：Cランク会員様価格";
+        alertBox.innerText = "適用中：優待価格プランC";
         rank = "c";
     } else if (pass === "nagao4") {
-        alertBox.innerText = "適用中：D・Eランク会員様価格";
+        alertBox.innerText = "適用中：優待価格プランD";
         rank = "de";
     } else if (pass !== "") {
         alertBox.innerText = "※合言葉を確認中（一般価格を表示しています）";
@@ -102,14 +102,13 @@ function searchPart() {
 
     if (searchInput.length < 3) return;
 
-    // data.jsからデータを検索
     if (!window.partsData) return;
     let hit = window.partsData.find(item => item.id === searchInput);
 
     if (hit) {
         nameDisplay.innerText = hit.name + " [" + hit.org + "]";
         
-        let finalPrice = hit.c; // デフォルトは一般（Cランクと同じ）
+        let finalPrice = hit.c; 
         if (rank === "ab") finalPrice = hit.ab;
         if (rank === "c") finalPrice = hit.c;
         if (rank === "de") finalPrice = hit.de;
