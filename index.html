@@ -12,7 +12,7 @@
         .form-group { margin-bottom: 20px; }
         label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 14px; }
         input[type="text"] { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        .company-name { color: #28a745; font-size: 13px; font-weight: bold; margin-top: 5px; }
+        .company-name { color: #28a745; font-size: 13px; font-weight: bold; margin-top: 5px; min-height: 18px; }
         .result-box { margin-top: 30px; padding: 20px; background-color: #f0f7ff; border-left: 5px solid #0052cc; border-radius: 4px; }
         .result-box h3 { margin-top: 0; margin-bottom: 15px; font-size: 18px; color: #0052cc; }
         .result-item { margin-bottom: 12px; font-size: 15px; }
@@ -54,7 +54,7 @@
 </div>
 
 <script>
-// ながおテクノ 厳選マスターデータ（外部ファイルなしで100%確実に動きます）
+// 確実に動作するデータ構造
 const priceMaster = {
     "4432035620": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-35620", rankA: 7000, rankC: 8000, rankD: 9000 },
     "4432012071": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12071", rankA: 10000, rankC: 11000, rankD: 12000 },
@@ -98,6 +98,7 @@ function searchPart() {
     let alertBox = document.getElementById("company-alert"), resultBox = document.getElementById("result-box"), errorBox = document.getElementById("error-box");
     alertBox.innerText = ""; resultBox.style.display = "none"; errorBox.style.display = "none";
 
+    // バグを起こさない安全な価格分岐判定
     let selectRank = "rankC";
     if (pass === "nagao1") { alertBox.innerText = "適用中：優待価格プランA/B"; selectRank = "rankA"; }
     else if (pass === "nagao3") { alertBox.innerText = "適用中：優待価格プランC"; selectRank = "rankC"; }
