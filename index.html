@@ -20,6 +20,7 @@
         .price { font-size: 26px; font-weight: bold; color: #d9383a; }
         .error-box { margin-top: 30px; padding: 15px; background-color: #fff0f0; border-left: 5px solid #d9383a; color: #d9383a; border-radius: 4px; font-weight: bold; }
         .notice { font-size: 11px; color: #777; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px; }
+        .loading { font-size: 12px; color: #666; text-align: center; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -27,6 +28,7 @@
 <div class="container">
     <h2>ながおテクノ<br>自動見積もり窓口</h2>
     <p class="subtitle">品番と合言葉を入力するだけで、目安金額をご確認いただけます。</p>
+    <div id="loading-status" class="loading">⚙️ データを読み込み中...</div>
 
     <div class="form-group">
         <label>🔑 取引先様用 合言葉（お持ちの方のみ）</label>
@@ -36,7 +38,7 @@
 
     <div class="form-group">
         <label>🔍 品番を入力してください（ハイフンなしでもOK）</label>
-        <input type="text" id="part-number" placeholder="例: 44320-35620" oninput="searchPart()">
+        <input type="text" id="part-number" placeholder="例: 88320-B2060" oninput="searchPart()">
     </div>
 
     <div id="result-box" class="result-box" style="display: none;">
@@ -54,36 +56,54 @@
 </div>
 
 <script>
-let csvData = [];
+let priceMaster = {};
 
-// 外部の data.csv から安全かつ高速にデータを読み込む
-fetch('data.csv')
+// すでにある「WEB単価」シートのCSVを1文字も漏らさずそのまま読み込む
+// ※ファイル名が異なる場合は、実際のファイル名（例: data.csv や WEB単価.csv）に書き換えてください
+fetch('新単価一覧表（2026-06-25).xlsx - WEB単価.csv')
     .then(response => response.text())
     .then(text => {
         let lines = text.split('\n');
         for(let i = 1; i < lines.length; i++) {
             let cols = lines[i].split(',');
-            if(cols.length >= 5) {
-                csvData.push({
-                    no: cols[0].replace(/[^a-zA-Z0-9]/g, "").toLowerCase().trim(),
-                    org: cols[0],
-                    name: cols[1],
-                    ab: parseInt(cols[2]),
-                    c: parseInt(cols[3]),
-                    de: parseInt(cols[4])
-                });
+            if(cols.length >= 9) {
+                // ハイフンや空白を取り除いた検索用キー（例: 88320b2060）
+                let rawNo = cols[3] ? cols[3].replace(/"/g, '').trim() : "";
+                let cleanNo = rawNo.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+                
+                if (cleanNo) {
+                    priceMaster[cleanNo] = {
+                        orgNo: rawNo,
+                        rankA: parseInt(cols[4]) || 0,
+                        rankB: parseInt(cols[5]) || 0,
+                        rankC: parseInt(cols[6]) || 0,
+                        rankD: parseInt(cols[7]) || 0,
+                        rankE: parseInt(cols[8]) || 0
+                    };
+                }
             }
         }
-    }).catch(err => console.error("データ読み込み失敗:", err));
+        document.getElementById("loading-status").innerText = "✅ データの読み込みが完了しました";
+    }).catch(err => {
+        document.getElementById("loading-status").innerText = "⚠️ データの読み込みに失敗しました。ファイル名を確認してください。";
+        console.error(err);
+    });
 
-function judgeWarranty(name) {
-    if (name.includes("触媒") || name.includes("DPR") || name.includes("DPF") || name.includes("ｺﾝﾊﾞｰﾀｰ") || name.includes("ﾏﾌﾗｰ")) {
-        return "初期不良のみ（商品発送日より1週間以内）";
+function judgeWarranty(no) {
+    let clean = no.toLowerCase();
+    // 品番の頭文字や特定の規則から品名・保証を正確に判定
+    if (clean.startsWith("44320") || clean.startsWith("44310")) {
+        return { name: "P/Sﾎﾟﾝﾌﾟ", warranty: "2年間又は2万km（いずれか早期到達まで）" };
+    } else if (clean.startsWith("88320") || clean.startsWith("95200")) {
+        return { name: "A/Cｺﾝﾌﾟﾚｯｻｰ", warranty: "1年間又は1万km（いずれか早期到達まで）" };
+    } else if (clean.startsWith("18450") || clean.startsWith("s1850")) {
+        return { name: "触媒ｺﾝﾊﾞｰﾀｰ / 触媒", warranty: "初期不良のみ（商品発送日より1週間以内）" };
+    } else if (clean.startsWith("me36")) {
+        return { name: "ﾕﾘｱﾓｼﾞｭﾚｰﾀｰ", warranty: "1年間又は1万km（いずれか早期到達まで）" };
+    } else if (clean.startsWith("43211")) {
+        return { name: "ﾌﾛﾝﾄﾅｯｸﾙ", warranty: "2年間又は2万km（いずれか早期到達まで）" };
     }
-    if (name.includes("ｺﾝﾌﾟﾚｯｻｰ") || name.includes("ﾀｰﾎﾞ") || name.includes("ｲﾝｼﾞｪｸﾀｰ") || name.includes("ｻﾌﾟﾗｲﾎﾟﾝﾌﾟ")) {
-        return "1年間又は1万km（いずれか早期到達まで）";
-    }
-    return "2年間又は2万km（いずれか早期到達まで）";
+    return { name: "リビルト部品", warranty: "2年間又は2万km（いずれか早期到達まで）" };
 }
 
 function searchPart() {
@@ -93,30 +113,22 @@ function searchPart() {
     let alertBox = document.getElementById("company-alert"), resultBox = document.getElementById("result-box"), errorBox = document.getElementById("error-box");
     alertBox.innerText = ""; resultBox.style.display = "none"; errorBox.style.display = "none";
 
-    let rank = "c";
-    if (pass === "nagao1") { alertBox.innerText = "適用中：優待価格プランA/B"; rank = "ab"; }
-    else if (pass === "nagao3") { alertBox.innerText = "適用中：優待価格プランC"; rank = "c"; }
-    else if (pass === "nagao4") { alertBox.innerText = "適用中：優待価格プランD/E"; rank = "de"; }
+    let selectRank = "rankC"; // デフォルトはC価格
+    if (pass === "nagao1") { alertBox.innerText = "適用中：優待価格プランA/B"; selectRank = "rankA"; }
+    else if (pass === "nagao3") { alertBox.innerText = "適用中：優待価格プランC"; selectRank = "rankC"; }
+    else if (pass === "nagao4") { alertBox.innerText = "適用中：優待価格プランD/E"; selectRank = "rankD"; }
 
     if (input.length < 3) return;
 
-    // 完全一致または前方一致で検索
-    let hit = csvData.find(d => d.no === input);
-    
-    // エクセル全データ推論補完ロジック（44320系P/Sポンプ等のマスタ補正）
-    if (!hit) {
-        if (input.startsWith("44320") || input.startsWith("44310")) {
-            let base = (input.includes("12") || input.includes("28")) ? 11000 : 8000;
-            hit = { name: "P/Sﾎﾟﾝﾌﾟ", org: document.getElementById("part-number").value.toUpperCase(), ab: base - 1000, c: base, de: base + 1000 };
-        } else if (input.startsWith("88320") || input.startsWith("95200")) {
-            hit = { name: "A/Cｺﾝﾌﾟﾚｯｻｰ(優良新品)", org: document.getElementById("part-number").value.toUpperCase(), ab: 19000, c: 21000, de: 22000 };
-        }
-    }
+    // 元のエクセルデータ（WEB単価）から完全一致でガチ抽出
+    let hit = priceMaster[input];
 
     if (hit) {
-        document.getElementById("part-name-display").innerText = hit.name + " [" + hit.org + "]";
-        document.getElementById("warranty-display").innerText = judgeWarranty(hit.name);
-        let price = hit[rank] || hit.c;
+        let info = judgeWarranty(hit.orgNo);
+        document.getElementById("part-name-display").innerText = info.name + " [" + hit.orgNo + "]";
+        document.getElementById("warranty-display").innerText = info.warranty;
+        
+        let price = hit[selectRank] || hit.rankC;
         document.getElementById("price-display").innerText = "¥" + price.toLocaleString();
         resultBox.style.display = "block";
     } else {
