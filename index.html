@@ -21,8 +21,6 @@
         .error-box { margin-top: 30px; padding: 15px; background-color: #fff0f0; border-left: 5px solid #d9383a; color: #d9383a; border-radius: 4px; font-weight: bold; }
         .notice { font-size: 11px; color: #777; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px; }
     </style>
-    <!-- データファイルを読み込む -->
-    <script src="data.js"></script>
 </head>
 <body>
 
@@ -60,7 +58,7 @@
         </div>
         <div class="result-item">
             <span class="label">品質保証:</span>
-            <span style="font-weight:bold;">2年または2万km（※部品により異なる場合があります）</span>
+            <span id="warranty-display" style="font-weight:bold; color: #28a745;">-</span>
         </div>
         <p class="notice">※正確な最新在庫と確定金額は、翌営業日にLINEまたはお電話にて改めてご連絡いたします。</p>
     </div>
@@ -72,6 +70,32 @@
 </div>
 
 <script>
+// 今回は動作を軽くするため、読み込み時にサーバー上の全データを処理する形にします
+let partDatabase = [];
+
+window.onload = function() {
+    // 1万6000件の元データCSVを読み込みます
+    fetch('新単価一覧表.csv')
+        .then(response => response.text())
+        .then(data => {
+            let lines = data.split('\n');
+            for(let i = 1; i < lines.length; i++) {
+                let col = lines[i].split(',');
+                if(col.length >= 7) {
+                    partDatabase.push({
+                        id: col[0].replace(/-/g, "").toLowerCase().trim(),
+                        org: col[0].trim(),
+                        name: col[1].trim(),
+                        ab: col[2].trim(),
+                        c: col[3].trim(),
+                        de: col[4].trim(),
+                        warranty: col[5].trim()
+                    });
+                }
+            }
+        }).catch(err => console.log("データ読み込み中..."));
+};
+
 function searchPart() {
     let pass = document.getElementById("passcode").value.toLowerCase().trim();
     let searchInput = document.getElementById("part-number").value.replace(/-/g, "").toLowerCase().trim();
@@ -81,6 +105,7 @@ function searchPart() {
     let errorBox = document.getElementById("error-box");
     let priceDisplay = document.getElementById("price-display");
     let nameDisplay = document.getElementById("part-name-display");
+    let warrantyDisplay = document.getElementById("warranty-display");
 
     alertBox.innerText = "";
     resultBox.style.display = "none";
@@ -102,11 +127,11 @@ function searchPart() {
 
     if (searchInput.length < 3) return;
 
-    if (!window.partsData) return;
-    let hit = window.partsData.find(item => item.id === searchInput);
+    let hit = partDatabase.find(item => item.id === searchInput);
 
     if (hit) {
         nameDisplay.innerText = hit.name + " [" + hit.org + "]";
+        warrantyDisplay.innerText = hit.warranty ? hit.warranty : "各部品ごとの規定による";
         
         let finalPrice = hit.c; 
         if (rank === "ab") finalPrice = hit.ab;
