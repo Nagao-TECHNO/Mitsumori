@@ -6,11 +6,10 @@
     <title>ながおテクノ自動見積もり窓口</title>
     <style>
         body {
-            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            font-family: Arial, sans-serif;
             background-color: #f4f6f9;
             margin: 0;
             padding: 20px;
-            color: #333;
         }
         .container {
             max-width: 500px;
@@ -23,9 +22,8 @@
         h2 {
             text-align: center;
             color: #0052cc;
-            margin-top: 0;
-            margin-bottom: 5px;
             font-size: 24px;
+            margin-bottom: 5px;
         }
         .subtitle {
             text-align: center;
@@ -49,11 +47,6 @@
             border-radius: 8px;
             box-sizing: border-box;
             font-size: 16px;
-            transition: border-color 0.3s;
-        }
-        input[type="text"]:focus, select:focus {
-            border-color: #0052cc;
-            outline: none;
         }
         .company-name {
             color: #28a745;
@@ -77,45 +70,21 @@
         .result-item {
             margin-bottom: 12px;
             font-size: 15px;
-            line-height: 1.5;
-        }
-        .flex-item {
-            display: flex;
-            align-items: baseline;
         }
         .label {
             font-weight: bold;
             color: #555;
             margin-right: 10px;
-            min-width: 75px;
-            display: inline-block;
         }
         .price {
             font-size: 26px;
             font-weight: bold;
             color: #d9383a;
         }
-        .tax-in {
-            font-size: 12px;
-            color: #666;
-            margin-left: 3px;
-        }
-        .status {
-            font-weight: bold;
-            color: #333;
-        }
-        .text-red {
-            color: #d9383a;
-        }
-        .text-blue {
-            color: #0052cc;
-        }
         .notice {
             font-size: 11px;
             color: #777;
-            line-height: 1.4;
             margin-top: 15px;
-            margin-bottom: 0;
             border-top: 1px dashed #ccc;
             padding-top: 10px;
         }
@@ -128,94 +97,80 @@
     <p class="subtitle">営業時間外でもその場で金額・コア返却をご確認いただけます。</p>
 
     <div class="form-group">
-        <label for="passcode">🔑 取引先様用 合言葉（お持ちの方のみ）</label>
-        <input type="text" id="passcode" placeholder="合言葉を入力すると業販価格になります" oninput="calculate()">
+        <label>🔑 取引先様用 合言葉（お持ちの方のみ）</label>
+        <input type="text" id="passcode" placeholder="nagao3 などを入力" oninput="calculate()">
         <div id="company-alert" class="company-name"></div>
     </div>
 
     <div class="form-group">
-        <label for="parts">📦 部品を選択してください</label>
+        <label>📦 部品を選択してください</label>
         <select id="parts" onchange="calculate()">
             <option value="">-- 選択してください --</option>
-            <option value="rack">ラック（ギアボックス）[44200-58021]</option>
+            <option value="rack">ラック（ギアボックス） [44200-58021]</option>
         </select>
     </div>
 
     <div id="result-box" class="result-box" style="display: none;">
         <h3>📋 お見積もり結果（目安）</h3>
-        
-        <div class="result-item flex-item">
+        <div class="result-item">
             <span class="label">参考価格:</span>
-            <div>
-                <span id="price-display" class="price">¥0</span>
-                <span class="tax-in">（税込）</span>
-            </div>
+            <span id="price-display" class="price">¥0</span><span>（税込）</span>
         </div>
-
         <div class="result-item">
             <span class="label">コア返却:</span>
-            <span class="status text-red">要返却（交換後、2週間以内にご返却ください）</span>
+            <span style="color:#d9383a; font-weight:bold;">要返却（交換後、2週間以内にご返却ください）</span>
         </div>
-
         <div class="result-item">
             <span class="label">品質保証:</span>
-            <span class="status">2年または2万km（いずれか早い方まで）</span>
+            <span style="font-weight:bold;">2年または2万km</span>
         </div>
-
-        <div class="result-item">
-            <span class="label">在庫状況:</span>
-            <span id="stock-display" class="status">--</span>
-        </div>
-
         <div class="result-item">
             <span class="label">出荷目安:</span>
-            <span class="status text-blue">17:00までのご注文で当日出荷可能</span>
+            <span style="color:#0052cc; font-weight:bold;">17:00までのご注文で当日出荷可能</span>
         </div>
-
         <p class="notice">※在庫数はリアルタイムで変動します。正確な最新在庫と確定金額は、翌営業日にLINEまたはお電話にて改めてご連絡いたします。</p>
     </div>
 </div>
 
 <script>
-const priceData = {
-    default: {
-        rankName: "一般価格",
-        rack: { price: "20,000", stock: "あり（目安：残り4台）" }
-    },
-    nagao3: {
-        rankName: "C会員様価格",
-        rack: { price: "20,000", stock: "あり（目安：残り4台）" }
-    },
-    "nagao-ab": {
-        rankName: "特別会員様価格",
-        rack: { price: "18,000", stock: "あり（目安：残り4台）" }
-    }
-};
-
 function calculate() {
-    const passcode = document.getElementById("passcode").value.trim().toLowerCase();
-    const part = document.getElementById("parts").value;
-    const alertBox = document.getElementById("company-alert");
-    const resultBox = document.getElementById("result-box");
-    const priceDisplay = document.getElementById("price-display");
-    const stockDisplay = document.getElementById("stock-display");
+    // 入力された文字を小文字にする設定
+    var pass = document.getElementById("passcode").value.toLowerCase().trim();
+    var part = document.getElementById("parts").value;
+    
+    var alertBox = document.getElementById("company-alert");
+    var resultBox = document.getElementById("result-box");
+    var priceDisplay = document.getElementById("price-display");
 
-    let clientData = priceData.default;
-    if (priceData[passcode]) {
-        clientData = priceData[passcode];
-        alertBox.innerText = `適用中：${clientData.rankName}`;
-    } else {
-        alertBox.innerText = "";
+    // 初期状態は非表示
+    alertBox.innerText = "";
+    resultBox.style.display = "none";
+
+    // 部品が選ばれていないなら何もしない
+    if (part !== "rack") {
+        return;
     }
 
-    if (part && clientData[part]) {
-        priceDisplay.innerText = "¥" + clientData[part].price;
-        stockDisplay.innerText = clientData[part].rack.stock;
+    // 金額の判定
+    if (pass === "nagao3") {
+        alertBox.innerText = "適用中：C会員様価格";
+        priceDisplay.innerText = "¥20,000";
+        resultBox.style.display = "block";
+    } else if (pass === "nagao-ab") {
+        alertBox.innerText = "適用中：特別会員様価格";
+        priceDisplay.innerText = "¥18,000";
+        resultBox.style.display = "block";
+    } else if (pass === "") {
+        // 合言葉が空っぽのときは一般価格を表示
+        priceDisplay.innerText = "¥20,000";
         resultBox.style.display = "block";
     } else {
-        resultBox.style.display = "none";
+        // 間違った合言葉が入っているときは一般価格を表示
+        priceDisplay.innerText = "¥20,000";
+        resultBox.style.display = "block";
     }
 }
 </script>
+
 </body>
 </html>
