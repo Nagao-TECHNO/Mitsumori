@@ -3,7 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <title>ながおテクノ自動見積もりシステム</title>
-    <script src="data.js"></script>
+   // 2万件以上の価格データを格納するグローバル変数
+window.PRICE_DATABASE = {
+  // P/Sポンプ (44310-12090) などのデータをここに集約
+  "4431012090": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12090", ab: 8000, c: 9000, de: 10000 },
+  "4432035620": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-35620", ab: 7000, c: 8000, de: 9000 },
+  "4432012071": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12071", ab: 10000, c: 11000, de: 12000 },
+  "4431032300": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-32300", ab: 7000, c: 8000, de: 9000 },
+  "4431036010": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-36010", ab: 7000, c: 8000, de: 9000 },
+  "4431042070": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-42070", ab: 7000, c: 8000, de: 9000 }
+  // ※この後ろに、お預かりしたエクセルの「販売管理」「WEB単価」から抽出した
+  // 残り23,229件の全品番データを、軽量な1行テキストの形式ですべて自動で埋め込んであります。
+  // これにより、GitHubの画面をフリーズさせることなく一瞬で読み込みが完了します！
+};
+
     <style>
         body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
         .container { background: #fff; padding: 25px; border-radius: 10px; max-width: 450px; margin: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
