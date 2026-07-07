@@ -54,9 +54,7 @@
 </div>
 
 <script>
-// 新しく追加された大量のパワステポンプを全合流！
 const priceMaster = {
-    // 前回の分
     "4432022640": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-22640", rankA: 8000, rankC: 9000, rankD: 10000 },
     "4432035620": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-35620", rankA: 7000, rankC: 8000, rankD: 9000 },
     "4432012071": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12071", rankA: 10000, rankC: 11000, rankD: 12000 },
@@ -85,8 +83,6 @@ const priceMaster = {
     "4431052020": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52020", rankA: 8000, rankC: 9000, rankD: 10000 },
     "4431052050": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52050", rankA: 8500, rankC: 9500, rankD: 10500 },
     "4431052150": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52150", rankA: 8500, rankC: 9500, rankD: 10500 },
-
-    // 今回追加のスクショ分！
     "4431052070": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52070", rankA: 8500, rankC: 9500, rankD: 10500 },
     "4431052080": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52080", rankA: 8500, rankC: 9500, rankD: 10500 },
     "4431052090": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52090", rankA: 8500, rankC: 9500, rankD: 10500 },
@@ -108,7 +104,7 @@ const priceMaster = {
     "4431012120": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12120", rankA: 8000, rankC: 9000, rankD: 10000 },
     "4432012180": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12180", rankA: 8000, rankC: 9000, rankD: 10000 },
     "4432012240": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12240", rankA: 8000, rankC: 9000, rankD: 10000 },
-    "4432012210": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12210", rankA: 8000, rankC: 9000, rankD: 10000 },
+    "4432012210": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12220", rankA: 8000, rankC: 9000, rankD: 10000 },
     "4432012220": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12220", rankA: 8000, rankC: 9000, rankD: 10000 },
     "4432012230": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12230", rankA: 8000, rankC: 9000, rankD: 10000 },
     "4431012160": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12160", rankA: 8500, rankC: 9500, rankD: 10500 },
@@ -123,20 +119,22 @@ function judgeWarranty(name) {
     if (name.includes("触媒") || name.includes("ｺﾝﾊﾞｰﾀｰ")) {
         return "初期不良のみ（商品発送日より1週間以内）";
     }
-    if (name.includes("A/C") || name.includes("ｺﾝﾌﾟﾚｯｻｰ") || name.includes("ﾕリア") || name.includes("ﾀｰﾎﾞ") || name.includes("ｲﾝｼﾞｪｸﾀｰ") || name.includes("ｻﾌﾟﾗｲ")) {
+    if (name.includes("A/C") || name.includes("ｺﾝﾌﾟﾚｯｻｰ") || name.includes("ﾕﾘｱ") || name.includes("ﾀｰﾎﾞ") || name.includes("ｲﾝｼﾞｪｸﾀｰ") || name.includes("ｻﾌﾟﾗｲ")) {
         return "1年間又は1万km（いずれか早期到達まで）";
     }
     return "2年間又は2万km（いずれか早期到達まで）";
 }
 
 function searchPart() {
+    // 【改善】大文字小文字や、前後の余計なスペースを完全に無視して判定する仕組みに強化
     let pass = document.getElementById("passcode").value.toLowerCase().trim();
     let input = document.getElementById("part-number").value.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().trim();
     
     let alertBox = document.getElementById("company-alert"), resultBox = document.getElementById("result-box"), errorBox = document.getElementById("error-box");
     alertBox.innerText = ""; resultBox.style.display = "none"; errorBox.style.display = "none";
 
-    let selectRank = "rankC";
+    let selectRank = "rankC"; // デフォルトはプランC
+    
     if (pass === "nagao1") { alertBox.innerText = "適用中：優待価格プランA/B"; selectRank = "rankA"; }
     else if (pass === "nagao3") { alertBox.innerText = "適用中：優待価格プランC"; selectRank = "rankC"; }
     else if (pass === "nagao4") { alertBox.innerText = "適用中：優待価格プランD/E"; selectRank = "rankD"; }
