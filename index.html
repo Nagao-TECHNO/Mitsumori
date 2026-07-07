@@ -2,87 +2,83 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>自動見積もりシステム</title>
     <script src="data.js"></script>
     <style>
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { background-color: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 480px; box-sizing: border-box; }
-        h1 { font-size: 20px; color: #333; text-align: center; margin-bottom: 24px; font-weight: bold; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-size: 14px; color: #555; font-weight: 600; }
-        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
-        button { width: 100%; padding: 14px; background-color: #007bff; color: #fff; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
-        button:hover { background-color: #0056b3; }
-        .error { color: #dc3545; padding: 10px; display: none; font-weight: bold; }
-        .result-box { margin-top: 25px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; display: none; }
-        .result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #edf2f7; }
-        .price-card { background: #fff; padding: 10px; border: 1px solid #e2e8f0; margin-top: 5px; display: flex; justify-content: space-between; }
+        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { background: #fff; padding: 20px; border-radius: 8px; max-width: 400px; margin: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input, button { width: 100%; padding: 10px; margin-top: 10px; box-sizing: border-box; }
+        .result { margin-top: 20px; display: none; }
+        .row { display: flex; justify-content: space-between; padding: 5px 0; }
+        .price { font-weight: bold; color: #1d4ed8; }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>自動見積もりシステム</h1>
-    <div class="form-group">
-        <label id="input-label" for="search-input">合言葉を入力してください</label>
-        <input type="text" id="search-input" placeholder="合言葉を入力">
+    <div id="auth-area">
+        <label id="label-text">合言葉を入力してください</label>
+        <input type="text" id="main-input">
+        <button onclick="process()">送信</button>
     </div>
-    <button id="action-btn" onclick="handleAction()">送信</button>
-    <div id="error-msg" class="error"></div>
-    <div id="result" class="result-box">
-        <div class="result-row"><span>品名</span><span id="res-name">-</span></div>
-        <div class="result-row"><span>品番</span><span id="res-code">-</span></div>
-        <div id="price-container"></div>
+    <div id="result-area" class="result">
+        <div class="row"><span>品名:</span><span id="res-name"></span></div>
+        <div class="row"><span>品番:</span><span id="res-code"></span></div>
+        <div id="price-list"></div>
     </div>
+    <div id="msg" style="color:red; margin-top:10px;"></div>
 </div>
 
 <script>
-    // 画面を更新しても合言葉を忘れないように、セッションに保存します
+    // セッションに合言葉を保存する
     function getRole() { return sessionStorage.getItem('userRole'); }
     function setRole(role) { sessionStorage.setItem('userRole', role); }
 
-    function handleAction() {
-        const input = document.getElementById('search-input').value.trim();
+    function process() {
+        const input = document.getElementById('main-input').value.trim();
         const role = getRole();
-        const errorMsg = document.getElementById('error-msg');
+        const msg = document.getElementById('msg');
+        msg.innerText = "";
 
         if (!role) {
+            // 合言葉チェック
             if (["nagao1", "nagao2", "nagao3", "nagao4"].includes(input)) {
                 setRole(input);
-                document.getElementById('input-label').innerText = "純正品番を入力してください";
-                document.getElementById('search-input').value = "";
-                document.getElementById('action-btn').innerText = "検索";
-                document.getElementById('result').style.display = 'none';
+                document.getElementById('label-text').innerText = "純正品番を入力してください";
+                document.getElementById('main-input').value = "";
+                document.getElementById('main-input').placeholder = "4432035620";
             } else {
-                errorMsg.innerText = "合言葉が違います。";
-                errorMsg.style.display = 'block';
+                msg.innerText = "合言葉が違います。";
             }
         } else {
-            // 全データをスキャンして検索
+            // 検索実行
             const db = window.PRICE_DATABASE;
             const records = Array.isArray(db) ? db : Object.values(db);
-            const item = records.find(d => 
-                String(d.car_hinban || "").includes(input) || 
-                String(d.hinban || "").includes(input)
-            );
+            const item = records.find(d => String(d.car_hinban || "").includes(input) || String(d.hinban || "").includes(input));
 
             if (item) {
-                document.getElementById('res-name').innerText = item.hin_sname || "不明";
+                document.getElementById('res-name').innerText = item.hin_sname || "-";
                 document.getElementById('res-code').innerText = item.car_hinban || input;
+                const list = document.getElementById('price-list');
+                list.innerHTML = "";
                 
-                const cont = document.getElementById('price-container');
                 const fmt = (v) => v ? "¥" + Number(v).toLocaleString() : "¥-";
-                
-                // ここで合言葉(role)に応じて表示するランクを厳密に切り替えます
-                if (role === "nagao1") cont.innerHTML = `<div class="price-card"><span>プランA</span><span>${fmt(item.A || item.ランクA)}</span></div><div class="price-card"><span>プランB</span><span>${fmt(item.B || item.ランクB)}</span></div>`;
-                else if (role === "nagao2") cont.innerHTML = `<div class="price-card"><span>プランB</span><span>${fmt(item.B || item.ランクB)}</span></div>`;
-                else if (role === "nagao3") cont.innerHTML = `<div class="price-card"><span>プランC</span><span>${fmt(item.C || item.ランクC)}</span></div>`;
-                else if (role === "nagao4") cont.innerHTML = `<div class="price-card"><span>プランD</span><span>${fmt(item.D || item.ランクD)}</span></div><div class="price-card"><span>プランE</span><span>${fmt(item.E || item.ランクE)}</span></div>`;
-                
-                document.getElementById('result').style.display = 'block';
+
+                // 役割に応じたプランのみ表示
+                if (role === "nagao1") {
+                    list.innerHTML += `<div class="row"><span class="price">優待価格プランA</span><span class="price">${fmt(item.A || item.ランクA)}</span></div>`;
+                    list.innerHTML += `<div class="row"><span class="price">優待価格プランB</span><span class="price">${fmt(item.B || item.ランクB)}</span></div>`;
+                } else if (role === "nagao2") {
+                    list.innerHTML += `<div class="row"><span class="price">優待価格プランB</span><span class="price">${fmt(item.B || item.ランクB)}</span></div>`;
+                } else if (role === "nagao3") {
+                    list.innerHTML += `<div class="row"><span class="price">優待価格プランC</span><span class="price">${fmt(item.C || item.ランクC)}</span></div>`;
+                } else if (role === "nagao4") {
+                    list.innerHTML += `<div class="row"><span class="price">優待価格プランD</span><span class="price">${fmt(item.D || item.ランクD)}</span></div>`;
+                    list.innerHTML += `<div class="row"><span class="price">優待価格プランE</span><span class="price">${fmt(item.E || item.ランクE)}</span></div>`;
+                }
+                document.getElementById('result-area').style.display = 'block';
             } else {
-                errorMsg.innerText = "該当する品番が見つかりません。";
-                errorMsg.style.display = 'block';
+                msg.innerText = "品番が見つかりません。";
             }
         }
     }
