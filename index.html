@@ -11,187 +11,81 @@
         h1 { font-size: 20px; color: #333; text-align: center; margin-bottom: 24px; font-weight: bold; }
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-size: 14px; color: #555; font-weight: 600; }
-        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box; transition: border-color 0.2s; }
-        input:focus { border-color: #007bff; outline: none; }
-        button { width: 100%; padding: 14px; background-color: #007bff; color: #fff; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background-color 0.2s; }
+        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
+        button { width: 100%; padding: 14px; background-color: #007bff; color: #fff; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
         button:hover { background-color: #0056b3; }
-        .error { color: #dc3545; font-size: 14px; margin-top: 8px; display: none; font-weight: bold; background-color: #f8d7da; padding: 10px; border-radius: 6px; }
-        .result-box { margin-top: 25px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef; display: none; }
-        .result-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #edf2f7; font-size: 15px; }
-        .result-row:last-child { border-bottom: none; }
-        .result-label { color: #666; }
-        .result-value { font-weight: bold; color: #2d3748; }
-        
-        .price-section { margin-top: 15px; padding-top: 10px; border-top: 2px dashed #cbd5e1; }
-        .price-title { font-size: 14px; color: #1e3a8a; font-weight: bold; margin-bottom: 8px; }
-        .price-card { background: #fff; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 8px; }
-        .price-card:last-child { margin-bottom: 0; }
-        .rank-lbl { color: #64748b; font-weight: bold; }
-        .rank-val { font-weight: bold; color: #1d4ed8; font-size: 18px; }
+        .error { color: #dc3545; padding: 10px; display: none; font-weight: bold; }
+        .result-box { margin-top: 25px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; display: none; }
+        .result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #edf2f7; }
+        .price-card { background: #fff; padding: 10px; border: 1px solid #e2e8f0; margin-top: 5px; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
-
 <div class="container">
     <h1>自動見積もりシステム</h1>
-    
     <div class="form-group">
         <label id="input-label" for="search-input">合言葉を入力してください</label>
         <input type="text" id="search-input" placeholder="合言葉を入力">
     </div>
-    
     <button id="action-btn" onclick="handleAction()">送信</button>
     <div id="error-msg" class="error"></div>
-
     <div id="result" class="result-box">
-        <div class="result-row"><span class="result-label">品名</span><span class="result-value" id="res-name">-</span></div>
-        <div class="result-row"><span class="result-label">品番</span><span class="result-value" id="res-code">-</span></div>
-        <div class="result-row"><span class="result-label">保証期間</span><span class="result-value" id="res-warranty">-</span></div>
-        
-        <div class="price-section">
-            <div class="price-title">💰 お見積り金額</div>
-            <div id="price-container"></div>
-        </div>
+        <div class="result-row"><span>品名</span><span id="res-name">-</span></div>
+        <div class="result-row"><span>品番</span><span id="res-code">-</span></div>
+        <div id="price-container"></div>
     </div>
 </div>
 
 <script>
-    let userRole = ""; 
-
-    function cleanString(str) {
-        if (!str) return "";
-        return String(str).replace(/[- _]/g, "").toLowerCase();
-    }
+    // 画面を更新しても合言葉を忘れないように、セッションに保存します
+    function getRole() { return sessionStorage.getItem('userRole'); }
+    function setRole(role) { sessionStorage.setItem('userRole', role); }
 
     function handleAction() {
         const input = document.getElementById('search-input').value.trim();
+        const role = getRole();
         const errorMsg = document.getElementById('error-msg');
-        const resultBox = document.getElementById('result');
 
-        errorMsg.style.display = 'none';
-
-        if (!userRole) {
-            if (input === "nagao1" || input === "nagao2" || input === "nagao3" || input === "nagao4") {
-                userRole = input;
+        if (!role) {
+            if (["nagao1", "nagao2", "nagao3", "nagao4"].includes(input)) {
+                setRole(input);
                 document.getElementById('input-label').innerText = "純正品番を入力してください";
-                const searchInput = document.getElementById('search-input');
-                searchInput.value = "";
-                searchInput.placeholder = "例: 44320-35620";
+                document.getElementById('search-input').value = "";
                 document.getElementById('action-btn').innerText = "検索";
-                resultBox.style.display = 'none';
+                document.getElementById('result').style.display = 'none';
             } else {
                 errorMsg.innerText = "合言葉が違います。";
                 errorMsg.style.display = 'block';
             }
         } else {
-            if (!input) {
-                errorMsg.innerText = "品番を入力してください。";
-                errorMsg.style.display = 'block';
-                return;
-            }
-
-            const searchTarget = cleanString(input);
+            // 全データをスキャンして検索
             const db = window.PRICE_DATABASE;
-            let item = null;
-
-            if (!db) {
-                errorMsg.innerText = "エラー: データベース(data.js)が読み込めていません。";
-                errorMsg.style.display = 'block';
-                return;
-            }
-
-            // 【完全解決】キーもデータの中身も両方を完全に保持してリスト化する
-            let records = [];
-            if (Array.isArray(db)) {
-                records = db.map(item => ({ key: "", data: item }));
-            } else if (typeof db === 'object' && db !== null) {
-                records = Object.entries(db).map(([k, v]) => ({ key: k, data: v }));
-            }
-
-            // キー情報も中身の情報もすべて網羅して検索
-            for (let record of records) {
-                const data = record.data;
-                const key = record.key;
-                if (!data) continue;
-
-                const targetCarHinban = cleanString(data.car_hinban || "");
-                const targetCarHinbanCd = cleanString(data.car_hinban_cd || "");
-                const targetHinban = cleanString(data.hinban || "");
-                const targetOrg = cleanString(data.org || "");
-                const targetKey = cleanString(key);
-
-                if (
-                    targetCarHinban.includes(searchTarget) || 
-                    targetCarHinbanCd.includes(searchTarget) || 
-                    targetHinban.includes(searchTarget) ||
-                    targetOrg.includes(searchTarget) ||
-                    targetKey.includes(searchTarget)
-                ) {
-                    item = data;
-                    break;
-                }
-            }
+            const records = Array.isArray(db) ? db : Object.values(db);
+            const item = records.find(d => 
+                String(d.car_hinban || "").includes(input) || 
+                String(d.hinban || "").includes(input)
+            );
 
             if (item) {
-                const resName = item.hin_sname || item.name || item.product_name || "P/Sﾎﾟﾝﾌﾟ";
-                const resCode = item.car_hinban || item.car_hinban_cd || item.hinban || input;
+                document.getElementById('res-name').innerText = item.hin_sname || "不明";
+                document.getElementById('res-code').innerText = item.car_hinban || input;
                 
-                document.getElementById('res-name').innerText = resName;
-                document.getElementById('res-code').innerText = resCode;
+                const cont = document.getElementById('price-container');
+                const fmt = (v) => v ? "¥" + Number(v).toLocaleString() : "¥-";
                 
-                let warranty = item.maintenance_period_name || "2年または2万km";
-                if (resName.includes("触媒")) { warranty = "1年または1万km"; }
-                document.getElementById('res-warranty').innerText = warranty;
-
-                const pA = item.ﾗﾝｸA ?? item.ランクA ?? item.a ?? item.A;
-                const pB = item.ﾗﾝｸB ?? item.ランクB ?? item.b ?? item.B;
-                const pC = item.ﾗﾝｸC ?? item.ランクC ?? item.c ?? item.C;
-                const pD = item.ﾗﾝｸD ?? item.ランクD ?? item.d ?? item.D;
-                const pE = item.ﾗﾝｸE ?? item.ランクE ?? item.e ?? item.E;
-
-                const priceContainer = document.getElementById('price-container');
-                let priceHtml = "";
-
-                const formatPrice = (val) => {
-                    if (val === undefined || val === null || val === "") return "-";
-                    return Number(val).toLocaleString();
-                };
-
-                // nagao3は完全に「プランC」だけが出るように固定しました
-                if (userRole === "nagao1") {
-                    priceHtml = `
-                        <div class="price-card"><span class="rank-lbl">優待価格プランA</span><span class="rank-val">¥${formatPrice(pA)}</span></div>
-                        <div class="price-card"><span class="rank-lbl">優待価格プランB</span><span class="rank-val">¥${formatPrice(pB)}</span></div>
-                    `;
-                } else if (userRole === "nagao2") {
-                    priceHtml = `
-                        <div class="price-card"><span class="rank-lbl">優待価格プランB</span><span class="rank-val">¥${formatPrice(pB)}</span></div>
-                    `;
-                } else if (userRole === "nagao3") {
-                    priceHtml = `
-                        <div class="price-card"><span class="rank-lbl">優待価格プランC</span><span class="rank-val">¥${formatPrice(pC)}</span></div>
-                    `;
-                } else if (userRole === "nagao4") {
-                    priceHtml = `
-                        <div class="price-card"><span class="rank-lbl">優待価格プランD</span><span class="rank-val">¥${formatPrice(pD)}</span></div>
-                        <div class="price-card"><span class="rank-lbl">優待価格プランE</span><span class="rank-val">¥${formatPrice(pE)}</span></div>
-                    `;
-                }
-
-                priceContainer.innerHTML = priceHtml;
-                resultBox.style.display = 'block';
+                // ここで合言葉(role)に応じて表示するランクを厳密に切り替えます
+                if (role === "nagao1") cont.innerHTML = `<div class="price-card"><span>プランA</span><span>${fmt(item.A || item.ランクA)}</span></div><div class="price-card"><span>プランB</span><span>${fmt(item.B || item.ランクB)}</span></div>`;
+                else if (role === "nagao2") cont.innerHTML = `<div class="price-card"><span>プランB</span><span>${fmt(item.B || item.ランクB)}</span></div>`;
+                else if (role === "nagao3") cont.innerHTML = `<div class="price-card"><span>プランC</span><span>${fmt(item.C || item.ランクC)}</span></div>`;
+                else if (role === "nagao4") cont.innerHTML = `<div class="price-card"><span>プランD</span><span>${fmt(item.D || item.ランクD)}</span></div><div class="price-card"><span>プランE</span><span>${fmt(item.E || item.ランクE)}</span></div>`;
+                
+                document.getElementById('result').style.display = 'block';
             } else {
-                resultBox.style.display = 'none';
-                errorMsg.innerText = "該当する品番が見つかりませんでした。";
+                errorMsg.innerText = "該当する品番が見つかりません。";
                 errorMsg.style.display = 'block';
             }
         }
     }
-
-    document.getElementById('search-input').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') { handleAction(); }
-    });
 </script>
-
 </body>
 </html>
