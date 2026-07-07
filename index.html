@@ -2,61 +2,45 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>部品見積もり検索システム</title>
+    <title>見積もりシステム</title>
     <style>
-        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
+        body { font-family: sans-serif; background: #eee; padding: 20px; }
         .box { background: white; padding: 25px; border-radius: 10px; max-width: 500px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        input, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        button { background: #007bff; color: white; border: none; cursor: pointer; }
-        #res { margin-top: 20px; border-top: 2px solid #eee; padding-top: 15px; display: none; }
+        .row { display: flex; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .label { width: 80px; color: #555; font-weight: bold; }
     </style>
 </head>
 <body>
 <div class="box">
-    <h3>部品見積もり検索</h3>
-    <div id="login-ui">
-        <input type="text" id="pass" placeholder="合言葉を入力">
-        <button onclick="login()">ログイン</button>
-    </div>
-    <div id="search-ui" style="display:none;">
-        <input type="text" id="code" placeholder="品番を入力">
-        <button onclick="search()">検索</button>
-        <button onclick="location.reload()" style="background:#6c757d;">終了</button>
-        <div id="res"></div>
-    </div>
+    <h3>見積もり検索</h3>
+    <input type="text" id="code" placeholder="品番を入力" style="width:100%; padding:10px;">
+    <button onclick="search()" style="width:100%; padding:10px; margin-top:10px; background:#007bff; color:white; border:none; cursor:pointer;">検索</button>
+    <div id="res" style="margin-top:20px; display:none;"></div>
 </div>
 
 <script>
-    // 統合データセット
+    // CSVから統合したデータセット（ここに全16,000件が入ります）
     const DATA = [
-        { car_hinban: "44320-35620", hin_sname: "P/Sポンプ", A: 7000, B: 7000, C: 8000, D: 9000, E: 9000 },
-        { car_hinban: "43211-29026", hin_sname: "フロントナックル", A: 28000, B: 28000, C: 28000, D: 29400, E: 32200 },
-        // ... (以下、膨大なデータが続きます。これが検索の元になります)
+        { car_hinban: "44320-35620", hin_sname: "P/Sﾎﾟﾝﾌﾟ", agent_tanka: 7000, web_remark: "2年間又は2万km", compatible: "44320-12311" },
+        { car_hinban: "43211-29026", hin_sname: "ﾌﾛﾝﾄﾅｯｸﾙ", agent_tanka: 28000, web_remark: "要ｺｱ返却", compatible: "43211-29026" }
     ];
 
-    function login() {
-        const p = document.getElementById('pass').value.trim();
-        if(["nagao1","nagao2","nagao3","nagao4"].includes(p)){
-            localStorage.setItem('role', p);
-            document.getElementById('login-ui').style.display = 'none';
-            document.getElementById('search-ui').style.display = 'block';
-        } else { alert("合言葉が違います"); }
-    }
-
     function search() {
-        const val = document.getElementById('code').value.trim().replace(/-/g, "").toLowerCase();
-        const role = localStorage.getItem('role');
-        const item = DATA.find(d => String(d.car_hinban).replace(/-/g, "").toLowerCase().includes(val));
+        const val = document.getElementById('code').value.trim();
+        const item = DATA.find(d => d.car_hinban === val);
         
         if(item) {
-            let h = `<b>品名: ${item.hin_sname}</b><br>品番: ${item.car_hinban}<hr>`;
-            if(role=="nagao1") h+=`プランA: ¥${item.A.toLocaleString()}<br>プランB: ¥${item.B.toLocaleString()}`;
-            else if(role=="nagao2") h+=`プランB: ¥${item.B.toLocaleString()}`;
-            else if(role=="nagao3") h+=`プランC: ¥${item.C.toLocaleString()}`;
-            else if(role=="nagao4") h+=`プランD: ¥${item.D.toLocaleString()}<br>プランE: ¥${item.E.toLocaleString()}`;
-            document.getElementById('res').innerHTML = h;
+            document.getElementById('res').innerHTML = `
+                <div class="row"><div class="label">品名:</div><b>${item.hin_sname}</b></div>
+                <div class="row"><div class="label">品番:</div><b>${item.car_hinban}</b></div>
+                <div class="row"><div class="label">価格:</div><b>¥${item.agent_tanka.toLocaleString()}</b></div>
+                <div class="row"><div class="label">保証:</div><b>${item.web_remark}</b></div>
+                <div class="row"><div class="label">適合:</div><b>${item.compatible}</b></div>
+            `;
             document.getElementById('res').style.display = 'block';
-        } else { alert("品番が見つかりません。"); }
+        } else {
+            alert("品番が見つかりません");
+        }
     }
 </script>
 </body>
