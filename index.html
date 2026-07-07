@@ -3,157 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ながおテクノ自動見積もり窓口</title>
+    <title>自動見積もりシステム</title>
+    <script src="data.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
-        .container { max-width: 500px; margin: 0 auto; background: #ffffff; padding: 30px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        h2 { text-align: center; color: #0052cc; font-size: 24px; margin-bottom: 5px; }
-        .subtitle { text-align: center; font-size: 13px; color: #666; margin-bottom: 30px; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { background-color: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 480px; box-sizing: border-box; }
+        h1 { font-size: 20px; color: #333; text-align: center; margin-bottom: 24px; font-weight: bold; }
         .form-group { margin-bottom: 20px; }
-        label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 14px; }
-        input[type="text"] { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        .company-name { color: #28a745; font-size: 13px; font-weight: bold; margin-top: 5px; min-height: 18px; }
-        .result-box { margin-top: 30px; padding: 20px; background-color: #f0f7ff; border-left: 5px solid #0052cc; border-radius: 4px; }
-        .result-box h3 { margin-top: 0; margin-bottom: 15px; font-size: 18px; color: #0052cc; }
-        .result-item { margin-bottom: 12px; font-size: 15px; }
-        .label { font-weight: bold; color: #555; margin-right: 10px; }
-        .price { font-size: 26px; font-weight: bold; color: #d9383a; }
-        .error-box { margin-top: 30px; padding: 15px; background-color: #fff0f0; border-left: 5px solid #d9383a; color: #d9383a; border-radius: 4px; font-weight: bold; }
-        .notice { font-size: 11px; color: #777; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px; }
+        label { display: block; margin-bottom: 8px; font-size: 14px; color: #555; font-weight: 600; }
+        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box; transition: border-color 0.2s; }
+        input:focus { border-color: #007bff; outline: none; }
+        button { width: 100%; padding: 14px; background-color: #007bff; color: #fff; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background-color 0.2s; }
+        button:hover { background-color: #0056b3; }
+        .error { color: #dc3545; font-size: 14px; margin-top: 8px; display: none; font-weight: bold; background-color: #f8d7da; padding: 10px; border-radius: 6px; }
+        .result-box { margin-top: 25px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef; display: none; }
+        .result-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #edf2f7; font-size: 15px; }
+        .result-row:last-child { border-bottom: none; }
+        .result-label { color: #666; }
+        .result-value { font-weight: bold; color: #2d3748; }
+        .price-dest { color: #007bff; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>ながおテクノ<br>自動見積もり窓口</h2>
-    <p class="subtitle">品番と合言葉を入力するだけで、目安金額をご確認いただけます。</p>
-
+    <h1>自動見積もりシステム</h1>
+    
     <div class="form-group">
-        <label>🔑 取引先様用 合言葉（お持ちの方のみ）</label>
-        <input type="text" id="passcode" placeholder="合言葉を入力してください" oninput="searchPart()">
-        <div id="company-alert" class="company-name"></div>
+        <label id="input-label" for="search-input">合言葉を入力してください</label>
+        <input type="text" id="search-input" placeholder="例: ひらがな4文字">
     </div>
+    
+    <button id="action-btn" onclick="handleAction()">送信</button>
+    <div id="error-msg" class="error"></div>
 
-    <div class="form-group">
-        <label>🔍 品番を入力してください（ハイフンなしでもOK）</label>
-        <input type="text" id="part-number" placeholder="例: 44320-22640" oninput="searchPart()">
-    </div>
-
-    <div id="result-box" class="result-box" style="display: none;">
-        <h3>📋 お見積もり結果（目安）</h3>
-        <div class="result-item"><span class="label">該当部品:</span><span id="part-name-display" style="font-weight:bold;">-</span></div>
-        <div class="result-item"><span class="label">参考価格:</span><span id="price-display" class="price">¥0</span><span>（税込）</span></div>
-        <div class="result-item"><span class="label">コア返却:</span><span style="color:#d9383a; font-weight:bold;">要返却（2週間以内）</span></div>
-        <div class="result-item"><span class="label">品質保証:</span><span id="warranty-display" style="font-weight:bold; color: #28a745;">-</span></div>
-        <p class="notice">※正確な最新在庫と確定金額は、翌営業日にLINEまたはお電話にて改めてご連絡いたします。</p>
-    </div>
-
-    <div id="error-box" class="error-box" style="display: none;">
-        該当する品番が見つかりませんでした。LINE窓口へお問い合わせください。
+    <div id="result" class="result-box">
+        <div class="result-row"><span class="result-label">品名</span><span class="result-value" id="res-name">-</span></div>
+        <div class="result-row"><span class="result-label">品番</span><span class="result-value" id="res-code">-</span></div>
+        <div class="result-row"><span class="result-label">保証期間</span><span class="result-value" id="res-warranty">-</span></div>
+        <div class="result-row" style="background-color: #e3f2fd; margin: 5px -20px; padding: 10px 20px;"><span class="result-label" style="font-weight: bold; color: #0d47a1;">お見積り金額</span><span class="result-value" id="res-price" style="font-size: 18px; color: #0d47a1;">-</span></div>
     </div>
 </div>
 
 <script>
-const priceMaster = {
-    "4432022640": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-22640", rankA: 8000, rankC: 9000, rankD: 10000 },
-    "4432035620": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-35620", rankA: 7000, rankC: 8000, rankD: 9000 },
-    "4432012071": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12071", rankA: 10000, rankC: 11000, rankD: 12000 },
-    "4431032300": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-32300", rankA: 7000, rankC: 8000, rankD: 9000 },
-    "4431036010": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-36010", rankA: 7000, rankC: 8000, rankD: 9000 },
-    "4431042070": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-42070", rankA: 7000, rankC: 8000, rankD: 9000 },
-    "4432028120": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-28120", rankA: 11000, rankC: 12000, rankD: 13000 },
-    "4431028240": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-28240", rankA: 10500, rankC: 11500, rankD: 12500 },
-    "4432026070": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-26070", rankA: 11000, rankC: 12000, rankD: 13000 },
-    "4432035490": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-35490", rankA: 10500, rankC: 11500, rankD: 12500 },
-    "4432026192": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-26192", rankA: 11000, rankC: 12000, rankD: 13000 },
-    "4432025030": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-25030", rankA: 11000, rankC: 12000, rankD: 13000 },
-    "4431026370": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-26370", rankA: 11000, rankC: 12000, rankD: 13000 },
-    "4431035660": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-35660", rankA: 11000, rankC: 12000, rankD: 13000 },
-    "4431026390": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-26390", rankA: 11000, rankC: 12000, rankD: 13000 },
-    "4431035690": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-35690", rankA: 11000, rankC: 12000, rankD: 13000 },
-    "4431025010": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-25010", rankA: 11000, rankC: 12000, rankD: 13000 },
-    "4431035710": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-35710", rankA: 11000, rankC: 12000, rankD: 13000 },
-    "4431026400": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-26400", rankA: 11000, rankC: 12000, rankD: 13000 },
-    "4431060390": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-60390", rankA: 14000, rankC: 15000, rankD: 16000 },
-    "44310e0240": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-E0240", rankA: 26000, rankC: 28500, rankD: 30000 },
-    "44310e0250": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-E0250", rankA: 26000, rankC: 28500, rankD: 30000 },
-    "44310e0480": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-E0480", rankA: 26000, rankC: 28500, rankD: 30000 },
-    "4431022550": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-22550", rankA: 8000, rankC: 9000, rankD: 10000 },
-    "4431052010": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52010", rankA: 8000, rankC: 9000, rankD: 10000 },
-    "4431052020": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52020", rankA: 8000, rankC: 9000, rankD: 10000 },
-    "4431052050": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52050", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431052150": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52150", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431052070": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52070", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431052080": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52080", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431052090": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52090", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431052100": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52100", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431052110": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52110", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431052210": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52210", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431052220": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52220", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431052250": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52250", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431052260": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52260", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431012140": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12140", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431012150": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12150", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431012210": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12210", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431012220": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12220", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431012170": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12170", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431012180": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12180", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431012190": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12190", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431012200": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12200", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431012110": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12110", rankA: 8000, rankC: 9000, rankD: 10000 },
-    "4431012120": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12120", rankA: 8000, rankC: 9000, rankD: 10000 },
-    "4432012180": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12180", rankA: 8000, rankC: 9000, rankD: 10000 },
-    "4432012240": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12240", rankA: 8000, rankC: 9000, rankD: 10000 },
-    "4432012210": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12220", rankA: 8000, rankC: 9000, rankD: 10000 },
-    "4432012220": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12220", rankA: 8000, rankC: 9000, rankD: 10000 },
-    "4432012230": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12230", rankA: 8000, rankC: 9000, rankD: 10000 },
-    "4431012160": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12160", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431012250": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12250", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431016200": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-16200", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4431012260": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12260", rankA: 8500, rankC: 9500, rankD: 10500 },
-    "4432012190": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12190", rankA: 8000, rankC: 9000, rankD: 10000 },
-    "4431012090": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12090", rankA: 8000, rankC: 9000, rankD: 10000 }
-};
+    let isUnlocked = false;
 
-function judgeWarranty(name) {
-    if (name.includes("触媒") || name.includes("ｺﾝﾊﾞｰﾀｰ")) {
-        return "初期不良のみ（商品発送日より1週間以内）";
+    function handleAction() {
+        const input = document.getElementById('search-input').value.trim();
+        const errorMsg = document.getElementById('error-msg');
+        const resultBox = document.getElementById('result');
+
+        errorMsg.style.display = 'none';
+
+        if (!isUnlocked) {
+            // ステップ1: 合言葉認証 (例として「ながお」)
+            if (input === "ながお") {
+                isUnlocked = true;
+                document.getElementById('input-label').innerText = "純正品番を入力してください";
+                const searchInput = document.getElementById('search-input');
+                searchInput.value = "";
+                searchInput.placeholder = "例: 44310-12090";
+                document.getElementById('action-btn').innerText = "検索";
+                resultBox.style.display = 'none';
+            } else {
+                errorMsg.innerText = "合言葉が違います。";
+                errorMsg.style.display = 'block';
+            }
+        } else {
+            // ステップ2: 品番検索
+            if (!input) {
+                errorMsg.innerText = "品番を入力してください。";
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            // 検索用にハイフンやスペースを除去して小文字にする
+            const searchKey = input.replace(/[- ]/g, "").toLowerCase();
+            
+            // 外部の data.js（window.PRICE_DATABASE）から1秒で爆速検索
+            const db = window.PRICE_DATABASE || {};
+            const item = db[searchKey];
+
+            if (item) {
+                document.getElementById('res-name').innerText = item.name;
+                document.getElementById('res-code').innerText = item.org;
+                
+                // 品名から保証期間を自動判定
+                let warranty = "2年または2万km";
+                if (item.name.includes("触媒")) {
+                    warranty = "1年または1万km";
+                }
+                document.getElementById('res-warranty').innerText = warranty;
+                
+                // 単価計算（エクセルのA/B, C, D/Eを綺麗に表示）
+                let priceText = `A/B: ¥${item.ab.toLocaleString()} / C: ¥${item.c.toLocaleString()} / D/E: ¥${item.de.toLocaleString()}`;
+                document.getElementById('res-price').innerText = priceText;
+                
+                resultBox.style.display = 'block';
+            } else {
+                resultBox.style.display = 'none';
+                errorMsg.innerText = "該当する品番が見つかりませんでした。";
+                errorMsg.style.display = 'block';
+            }
+        }
     }
-    if (name.includes("A/C") || name.includes("ｺﾝﾌﾟﾚｯｻｰ") || name.includes("ﾕﾘｱ") || name.includes("ﾀｰﾎﾞ") || name.includes("ｲﾝｼﾞｪｸﾀｰ") || name.includes("ｻﾌﾟﾗｲ")) {
-        return "1年間又は1万km（いずれか早期到達まで）";
-    }
-    return "2年間又は2万km（いずれか早期到達まで）";
-}
 
-function searchPart() {
-    // 【改善】大文字小文字や、前後の余計なスペースを完全に無視して判定する仕組みに強化
-    let pass = document.getElementById("passcode").value.toLowerCase().trim();
-    let input = document.getElementById("part-number").value.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().trim();
-    
-    let alertBox = document.getElementById("company-alert"), resultBox = document.getElementById("result-box"), errorBox = document.getElementById("error-box");
-    alertBox.innerText = ""; resultBox.style.display = "none"; errorBox.style.display = "none";
-
-    let selectRank = "rankC"; // デフォルトはプランC
-    
-    if (pass === "nagao1") { alertBox.innerText = "適用中：優待価格プランA/B"; selectRank = "rankA"; }
-    else if (pass === "nagao3") { alertBox.innerText = "適用中：優待価格プランC"; selectRank = "rankC"; }
-    else if (pass === "nagao4") { alertBox.innerText = "適用中：優待価格プランD/E"; selectRank = "rankD"; }
-
-    if (input.length < 3) return;
-
-    let hit = priceMaster[input];
-
-    if (hit) {
-        document.getElementById("part-name-display").innerText = hit.name + " [" + hit.org + "]";
-        document.getElementById("warranty-display").innerText = judgeWarranty(hit.name);
-        
-        let price = hit[selectRank];
-        document.getElementById("price-display").innerText = "¥" + price.toLocaleString();
-        resultBox.style.display = "block";
-    } else {
-        errorBox.style.display = "block";
-    }
-}
+    // Enterキーでも検索できるようにする親切設計
+    document.getElementById('search-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') { handleAction(); }
+    });
 </script>
+
 </body>
 </html>
