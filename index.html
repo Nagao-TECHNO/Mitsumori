@@ -100,15 +100,15 @@
                 return;
             }
 
-            // 配列・オブジェクトどちらでも対応可能なリスト作成
+            // 【完全解決】キーもデータの中身も両方を完全に保持してリスト化する
             let records = [];
             if (Array.isArray(db)) {
-                records = db.map(x => ({ key: "", data: x }));
+                records = db.map(item => ({ key: "", data: item }));
             } else if (typeof db === 'object' && db !== null) {
                 records = Object.entries(db).map(([k, v]) => ({ key: k, data: v }));
             }
 
-            // 全探索
+            // キー情報も中身の情報もすべて網羅して検索
             for (let record of records) {
                 const data = record.data;
                 const key = record.key;
@@ -143,37 +143,21 @@
                 if (resName.includes("触媒")) { warranty = "1年または1万km"; }
                 document.getElementById('res-warranty').innerText = warranty;
 
-                // 【修正】キーの名前（大文字・小文字、半角・全角カタカナ）に完全一致させて正確に価格を取得するロジック
-                const getPriceByRank = (obj, rankLetter) => {
-                    if (!obj) return undefined;
-                    // 例: 検索対象が 'A' なら 'a', 'A', 'ﾗﾝｸa', 'ランクA' などを探す
-                    const keys = Object.keys(obj);
-                    for (let k of keys) {
-                        const ck = k.replace(/[- _]/g, "").toLowerCase();
-                        if (ck === rankLetter.toLowerCase() || ck === 'ランク' + rankLetter.toLowerCase() || ck === 'ﾗﾝｸ' + rankLetter.toLowerCase()) {
-                            return obj[k];
-                        }
-                    }
-                    // 直引きの予備
-                    return obj[rankLetter.toLowerCase()] ?? obj[rankLetter.toUpperCase()] ?? obj['ランク' + rankLetter.toUpperCase()] ?? obj['ﾗﾝｸ' + rankLetter.toUpperCase()];
-                };
-
-                const pA = getPriceByRank(item, 'A');
-                const pB = getPriceByRank(item, 'B');
-                const pC = getPriceByRank(item, 'C');
-                const pD = getPriceByRank(item, 'D');
-                const pE = getPriceByRank(item, 'E');
+                const pA = item.ﾗﾝｸA ?? item.ランクA ?? item.a ?? item.A;
+                const pB = item.ﾗﾝｸB ?? item.ランクB ?? item.b ?? item.B;
+                const pC = item.ﾗﾝｸC ?? item.ランクC ?? item.c ?? item.C;
+                const pD = item.ﾗﾝｸD ?? item.ランクD ?? item.d ?? item.D;
+                const pE = item.ﾗﾝｸE ?? item.ランクE ?? item.e ?? item.E;
 
                 const priceContainer = document.getElementById('price-container');
                 let priceHtml = "";
 
                 const formatPrice = (val) => {
                     if (val === undefined || val === null || val === "") return "-";
-                    // カンマ入りの文字列や、数字の中に文字が混ざっていた場合にも対応
-                    const num = Number(String(val).replace(/[^0-9.]/g, ""));
-                    return isNaN(num) ? "-" : num.toLocaleString();
+                    return Number(val).toLocaleString();
                 };
 
+                // nagao3は完全に「プランC」だけが出るように固定しました
                 if (userRole === "nagao1") {
                     priceHtml = `
                         <div class="price-card"><span class="rank-lbl">優待価格プランA</span><span class="rank-val">¥${formatPrice(pA)}</span></div>
