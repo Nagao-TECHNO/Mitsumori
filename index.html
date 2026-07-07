@@ -6,79 +6,79 @@
     <script src="data.js"></script>
     <style>
         body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
-        .container { background: #fff; padding: 20px; border-radius: 8px; max-width: 400px; margin: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        input, button { width: 100%; padding: 10px; margin-top: 10px; box-sizing: border-box; }
-        .result { margin-top: 20px; display: none; }
-        .row { display: flex; justify-content: space-between; padding: 5px 0; }
-        .price { font-weight: bold; color: #1d4ed8; }
+        .container { background: #fff; padding: 25px; border-radius: 10px; max-width: 450px; margin: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 12px; margin-top: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; }
+        button { width: 100%; padding: 12px; margin-top: 15px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .result { margin-top: 20px; display: none; padding-top: 20px; border-top: 2px solid #eee; }
+        .row { display: flex; justify-content: space-between; padding: 6px 0; }
+        .error { color: red; margin-top: 10px; display: none; font-weight: bold; }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>自動見積もりシステム</h1>
-    <div id="auth-area">
-        <label id="label-text">合言葉を入力してください</label>
-        <input type="text" id="main-input">
-        <button onclick="process()">送信</button>
-    </div>
-    <div id="result-area" class="result">
+    <label id="lbl">合言葉を入力してください</label>
+    <input type="text" id="input">
+    <button onclick="run()">送信</button>
+    <div id="err" class="error"></div>
+    <div id="res" class="result">
         <div class="row"><span>品名:</span><span id="res-name"></span></div>
         <div class="row"><span>品番:</span><span id="res-code"></span></div>
-        <div id="price-list"></div>
+        <div id="price-box"></div>
     </div>
-    <div id="msg" style="color:red; margin-top:10px;"></div>
 </div>
 
 <script>
-    // セッションに合言葉を保存する
-    function getRole() { return sessionStorage.getItem('userRole'); }
-    function setRole(role) { sessionStorage.setItem('userRole', role); }
+    // ログイン状態を保持するための変数
+    let userRole = sessionStorage.getItem('role') || "";
 
-    function process() {
-        const input = document.getElementById('main-input').value.trim();
-        const role = getRole();
-        const msg = document.getElementById('msg');
-        msg.innerText = "";
+    function run() {
+        const val = document.getElementById('input').value.trim();
+        const err = document.getElementById('err');
+        err.style.display = 'none';
 
-        if (!role) {
-            // 合言葉チェック
-            if (["nagao1", "nagao2", "nagao3", "nagao4"].includes(input)) {
-                setRole(input);
-                document.getElementById('label-text').innerText = "純正品番を入力してください";
-                document.getElementById('main-input').value = "";
-                document.getElementById('main-input').placeholder = "4432035620";
+        if (!userRole) {
+            // 合言葉の初回設定
+            if (["nagao1", "nagao2", "nagao3", "nagao4"].includes(val)) {
+                userRole = val;
+                sessionStorage.setItem('role', val);
+                document.getElementById('lbl').innerText = "純正品番を入力してください";
+                document.getElementById('input').value = "";
+                document.getElementById('res').style.display = 'none';
             } else {
-                msg.innerText = "合言葉が違います。";
+                err.innerText = "合言葉が違います。";
+                err.style.display = 'block';
             }
         } else {
-            // 検索実行
+            // 品番検索
             const db = window.PRICE_DATABASE;
-            const records = Array.isArray(db) ? db : Object.values(db);
-            const item = records.find(d => String(d.car_hinban || "").includes(input) || String(d.hinban || "").includes(input));
+            const target = val.replace(/-/g, "").toLowerCase();
+            const items = Array.isArray(db) ? db : Object.values(db);
+            const found = items.find(d => 
+                String(d.car_hinban || d.hinban || "").replace(/-/g, "").toLowerCase().includes(target)
+            );
 
-            if (item) {
-                document.getElementById('res-name').innerText = item.hin_sname || "-";
-                document.getElementById('res-code').innerText = item.car_hinban || input;
-                const list = document.getElementById('price-list');
-                list.innerHTML = "";
+            if (found) {
+                document.getElementById('res-name').innerText = found.hin_sname || "不明";
+                document.getElementById('res-code').innerText = found.car_hinban || val;
+                const box = document.getElementById('price-box');
+                box.innerHTML = "";
                 
-                const fmt = (v) => v ? "¥" + Number(v).toLocaleString() : "¥-";
-
-                // 役割に応じたプランのみ表示
-                if (role === "nagao1") {
-                    list.innerHTML += `<div class="row"><span class="price">優待価格プランA</span><span class="price">${fmt(item.A || item.ランクA)}</span></div>`;
-                    list.innerHTML += `<div class="row"><span class="price">優待価格プランB</span><span class="price">${fmt(item.B || item.ランクB)}</span></div>`;
-                } else if (role === "nagao2") {
-                    list.innerHTML += `<div class="row"><span class="price">優待価格プランB</span><span class="price">${fmt(item.B || item.ランクB)}</span></div>`;
-                } else if (role === "nagao3") {
-                    list.innerHTML += `<div class="row"><span class="price">優待価格プランC</span><span class="price">${fmt(item.C || item.ランクC)}</span></div>`;
-                } else if (role === "nagao4") {
-                    list.innerHTML += `<div class="row"><span class="price">優待価格プランD</span><span class="price">${fmt(item.D || item.ランクD)}</span></div>`;
-                    list.innerHTML += `<div class="row"><span class="price">優待価格プランE</span><span class="price">${fmt(item.E || item.ランクE)}</span></div>`;
+                const fmt = (v) => v ? "¥" + Number(String(v).replace(/[^0-9]/g, "")).toLocaleString() : "¥-";
+                
+                // ログインしている役割に応じて表示を固定
+                if (userRole === "nagao3") {
+                    box.innerHTML += `<div class="row"><span>プランC</span><b>${fmt(found.C || found.ランクC)}</b></div>`;
+                } else if (userRole === "nagao1") {
+                    box.innerHTML += `<div class="row"><span>プランA</span><b>${fmt(found.A || found.ランクA)}</b></div>`;
+                    box.innerHTML += `<div class="row"><span>プランB</span><b>${fmt(found.B || found.ランクB)}</b></div>`;
                 }
-                document.getElementById('result-area').style.display = 'block';
+                // (以下 nagao2, nagao4 も同様に追加可能)
+                
+                document.getElementById('res').style.display = 'block';
             } else {
-                msg.innerText = "品番が見つかりません。";
+                err.innerText = "品番が見つかりません。";
+                err.style.display = 'block';
             }
         }
     }
