@@ -54,9 +54,8 @@
 </div>
 
 <script>
-// ながおテクノ 厳選本格単価データベース（連動バグを完全消去）
+// ながおテクノ 単価データベース
 const priceMaster = {
-    // パワステポンプ（画像にあった正しい品番：44320-22640）
     "4432022640": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-22640", rankA: 14000, rankC: 15000, rankD: 16000 },
     "4432035620": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-35620", rankA: 7000, rankC: 8000, rankD: 9000 },
     "4432012071": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12071", rankA: 10000, rankC: 11000, rankD: 12000 },
@@ -66,20 +65,17 @@ const priceMaster = {
     "4432028120": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-28120", rankA: 11000, rankC: 12000, rankD: 13000 },
     "4431028240": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-28240", rankA: 10500, rankC: 11500, rankD: 12500 },
     
-    // A/Cコンプレッサー
     "88320b2060": { name: "A/Cｺﾝﾌﾟﾚｯｻｰ", org: "88320-B2060", rankA: 19000, rankC: 21000, rankD: 22000 },
     "8832097508": { name: "A/Cｺﾝﾌﾟﾚｯｻｰ", org: "88320-97508", rankA: 13000, rankC: 15000, rankD: 15000 },
     "88320b5010": { name: "A/Cｺﾝﾌﾟﾚｯｻｰ", org: "88320-B5010", rankA: 19000, rankC: 21000, rankD: 22000 },
     "88310e0020": { name: "A/Cｺﾝﾌﾟﾚｯｻｰ", org: "88310-E0020", rankA: 26000, rankC: 28500, rankD: 30000 },
     "88310b2190": { name: "A/Cｺﾝﾌﾟﾚｯｻｰ", org: "88310-B2190", rankA: 19000, rankC: 21000, rankD: 22000 },
     
-    // オルタネーター・セルモーター
     "27060b2010": { name: "ｵﾙﾀﾈｰﾀｰ", org: "27060-B2010", rankA: 12000, rankC: 13500, rankD: 14500 },
     "2706028300": { name: "ｵﾙﾀﾈｰﾀｰ", org: "27060-28300", rankA: 15000, rankC: 16500, rankD: 18000 },
     "2810028051": { name: "ｾﾙﾓｰﾀｰ", org: "28100-28051", rankA: 11000, rankC: 12000, rankD: 13000 },
     "28100b2030": { name: "ｾﾙﾓｰﾀｰ", org: "28100-B2030", rankA: 10000, rankC: 11000, rankD: 12000 },
 
-    // 触媒・排気系・その他
     "18450e0390": { name: "触媒ｺﾝﾊﾞｰﾀｰ", org: "18450-E0390", rankA: 180000, rankC: 193000, rankD: 193000 },
     "s1850e0621": { name: "触媒(洗浄ﾘﾋﾞﾙﾄ)", org: "S1850-E0621", rankA: 92700, rankC: 92700, rankD: 101970 },
     "me361050": { name: "ﾕﾘｱﾓｼﾞｭﾚｰﾀｰ", org: "ME361050", rankA: 88400, rankC: 88400, rankD: 97240 },
@@ -104,13 +100,14 @@ function judgeWarranty(name) {
 
 function searchPart() {
     let pass = document.getElementById("passcode").value.toLowerCase().trim();
+    
+    // 入力された品番から文字・ハイフンを完全に消去して小文字化（バグを根本治療）
     let input = document.getElementById("part-number").value.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().trim();
     
     let alertBox = document.getElementById("company-alert"), resultBox = document.getElementById("result-box"), errorBox = document.getElementById("error-box");
     alertBox.innerText = ""; resultBox.style.display = "none"; errorBox.style.display = "none";
 
-    // プラン判定の切り替えバグを完全に修正しました
-    let selectRank = "rankC"; // デフォルト
+    let selectRank = "rankC";
     if (pass === "nagao1") { alertBox.innerText = "適用中：優待価格プランA/B"; selectRank = "rankA"; }
     else if (pass === "nagao3") { alertBox.innerText = "適用中：優待価格プランC"; selectRank = "rankC"; }
     else if (pass === "nagao4") { alertBox.innerText = "適用中：優待価格プランD/E"; selectRank = "rankD"; }
@@ -123,7 +120,6 @@ function searchPart() {
         document.getElementById("part-name-display").innerText = hit.name + " [" + hit.org + "]";
         document.getElementById("warranty-display").innerText = judgeWarranty(hit.name);
         
-        // 判定されたselectRank(rankAなど)から正しい数字を確実に引っ張ります
         let price = hit[selectRank];
         document.getElementById("price-display").innerText = "¥" + price.toLocaleString();
         resultBox.style.display = "block";
