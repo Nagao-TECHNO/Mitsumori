@@ -21,7 +21,14 @@
         .result-row:last-child { border-bottom: none; }
         .result-label { color: #666; }
         .result-value { font-weight: bold; color: #2d3748; }
-        .price-dest { color: #007bff; font-weight: bold; }
+        
+        /* 価格表示エリアのスタイル */
+        .price-section { margin-top: 15px; padding-top: 10px; border-top: 2px dashed #cbd5e1; }
+        .price-title { font-size: 14px; color: #1e3a8a; font-weight: bold; margin-bottom: 8px; }
+        .price-card { background: #fff; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 8px; }
+        .price-card:last-child { margin-bottom: 0; }
+        .rank-lbl { color: #64748b; font-weight: bold; }
+        .rank-val { font-weight: bold; color: #1d4ed8; font-size: 18px; }
     </style>
 </head>
 <body>
@@ -31,7 +38,7 @@
     
     <div class="form-group">
         <label id="input-label" for="search-input">合言葉を入力してください</label>
-        <input type="text" id="search-input" placeholder="例: ひらがな4文字">
+        <input type="text" id="search-input" placeholder="合言葉を入力">
     </div>
     
     <button id="action-btn" onclick="handleAction()">送信</button>
@@ -41,12 +48,17 @@
         <div class="result-row"><span class="result-label">品名</span><span class="result-value" id="res-name">-</span></div>
         <div class="result-row"><span class="result-label">品番</span><span class="result-value" id="res-code">-</span></div>
         <div class="result-row"><span class="result-label">保証期間</span><span class="result-value" id="res-warranty">-</span></div>
-        <div class="result-row" style="background-color: #e3f2fd; margin: 5px -20px; padding: 10px 20px;"><span class="result-label" style="font-weight: bold; color: #0d47a1;">お見積り金額</span><span class="result-value" id="res-price" style="font-size: 18px; color: #0d47a1;">-</span></div>
+        
+        <div class="price-section">
+            <div class="price-title">💰 お見積り金額</div>
+            <div id="price-container">
+                </div>
+        </div>
     </div>
 </div>
 
 <script>
-    let isUnlocked = false;
+    let userRole = ""; // 入力されたパスワードに応じた役割を保存
 
     function handleAction() {
         const input = document.getElementById('search-input').value.trim();
@@ -55,10 +67,10 @@
 
         errorMsg.style.display = 'none';
 
-        if (!isUnlocked) {
-            // ステップ1: 合言葉認証 (例として「ながお」)
-            if (input === "ながお") {
-                isUnlocked = true;
+        if (!userRole) {
+            // パスワード（合言葉）の判定
+            if (input === "nagao1" || input === "nagao2" || input === "nagao4") {
+                userRole = input; // 役割を確定
                 document.getElementById('input-label').innerText = "純正品番を入力してください";
                 const searchInput = document.getElementById('search-input');
                 searchInput.value = "";
@@ -70,17 +82,14 @@
                 errorMsg.style.display = 'block';
             }
         } else {
-            // ステップ2: 品番検索
+            // 品番検索
             if (!input) {
                 errorMsg.innerText = "品番を入力してください。";
                 errorMsg.style.display = 'block';
                 return;
             }
 
-            // 検索用にハイフンやスペースを除去して小文字にする
             const searchKey = input.replace(/[- ]/g, "").toLowerCase();
-            
-            // 外部の data.js（window.PRICE_DATABASE）から1秒で爆速検索
             const db = window.PRICE_DATABASE || {};
             const item = db[searchKey];
 
@@ -88,17 +97,37 @@
                 document.getElementById('res-name').innerText = item.name;
                 document.getElementById('res-code').innerText = item.org;
                 
-                // 品名から保証期間を自動判定
+                // 保証期間の自動判定
                 let warranty = "2年または2万km";
                 if (item.name.includes("触媒")) {
                     warranty = "1年または1万km";
                 }
                 document.getElementById('res-warranty').innerText = warranty;
                 
-                // 単価計算（エクセルのA/B, C, D/Eを綺麗に表示）
-                let priceText = `A/B: ¥${item.ab.toLocaleString()} / C: ¥${item.c.toLocaleString()} / D/E: ¥${item.de.toLocaleString()}`;
-                document.getElementById('res-price').innerText = priceText;
-                
+                // 合言葉に応じた価格表示の切り替え
+                const priceContainer = document.getElementById('price-container');
+                let priceHtml = "";
+
+                if (userRole === "nagao1") {
+                    // ランクA・Bの価格を表示
+                    priceHtml = `
+                        <div class="price-card"><span class="rank-lbl">優待価格プランA</span><span class="rank-val">¥${item.a.toLocaleString()}</span></div>
+                        <div class="price-card"><span class="rank-lbl">優待価格プランB</span><span class="rank-val">¥${item.b.toLocaleString()}</span></div>
+                    `;
+                } else if (userRole === "nagao2") {
+                    // ランクCの価格を表示
+                    priceHtml = `
+                        <div class="price-card"><span class="rank-lbl">優待価格プランC</span><span class="rank-val">¥${item.c.toLocaleString()}</span></div>
+                    `;
+                } else if (userRole === "nagao4") {
+                    // ランクD・Eの価格を表示
+                    priceHtml = `
+                        <div class="price-card"><span class="rank-lbl">優待価格プランD</span><span class="rank-val">¥${item.d.toLocaleString()}</span></div>
+                        <div class="price-card"><span class="rank-lbl">優待価格プランE</span><span class="rank-val">¥${item.e.toLocaleString()}</span></div>
+                    `;
+                }
+
+                priceContainer.innerHTML = priceHtml;
                 resultBox.style.display = 'block';
             } else {
                 resultBox.style.display = 'none';
@@ -108,7 +137,6 @@
         }
     }
 
-    // Enterキーでも検索できるようにする親切設計
     document.getElementById('search-input').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') { handleAction(); }
     });
