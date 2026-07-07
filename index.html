@@ -36,7 +36,7 @@
 
     <div class="form-group">
         <label>🔍 品番を入力してください（ハイフンなしでもOK）</label>
-        <input type="text" id="part-number" placeholder="例: 88320-B2060" oninput="searchPart()">
+        <input type="text" id="part-number" placeholder="例: 44320-22640" oninput="searchPart()">
     </div>
 
     <div id="result-box" class="result-box" style="display: none;">
@@ -54,8 +54,9 @@
 </div>
 
 <script>
-// 正しいエクセルの金額（A/Bなら¥8,000）に修正しました！
+// 新しく追加された大量のパワステポンプを全合流！
 const priceMaster = {
+    // 前回の分
     "4432022640": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-22640", rankA: 8000, rankC: 9000, rankD: 10000 },
     "4432035620": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-35620", rankA: 7000, rankC: 8000, rankD: 9000 },
     "4432012071": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12071", rankA: 10000, rankC: 11000, rankD: 12000 },
@@ -64,35 +65,65 @@ const priceMaster = {
     "4431042070": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-42070", rankA: 7000, rankC: 8000, rankD: 9000 },
     "4432028120": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-28120", rankA: 11000, rankC: 12000, rankD: 13000 },
     "4431028240": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-28240", rankA: 10500, rankC: 11500, rankD: 12500 },
-    
-    "88320b2060": { name: "A/Cｺﾝﾌﾟﾚｯｻｰ", org: "88320-B2060", rankA: 19000, rankC: 21000, rankD: 22000 },
-    "8832097508": { name: "A/Cｺﾝﾌﾟﾚｯｻｰ", org: "88320-97508", rankA: 13000, rankC: 15000, rankD: 15000 },
-    "88320b5010": { name: "A/Cｺﾝﾌﾟﾚｯｻｰ", org: "88320-B5010", rankA: 19000, rankC: 21000, rankD: 22000 },
-    "88310e0020": { name: "A/Cｺﾝﾌﾟﾚｯｻｰ", org: "88310-E0020", rankA: 26000, rankC: 28500, rankD: 30000 },
-    "88310b2190": { name: "A/Cｺﾝﾌﾟﾚｯｻｰ", org: "88310-B2190", rankA: 19000, rankC: 21000, rankD: 22000 },
-    
-    "27060b2010": { name: "ｵﾙﾀﾈｰﾀｰ", org: "27060-B2010", rankA: 12000, rankC: 13500, rankD: 14500 },
-    "2706028300": { name: "ｵﾙﾀﾈｰﾀｰ", org: "27060-28300", rankA: 15000, rankC: 16500, rankD: 18000 },
-    "2810028051": { name: "ｾﾙﾓｰﾀｰ", org: "28100-28051", rankA: 11000, rankC: 12000, rankD: 13000 },
-    "28100b2030": { name: "ｾﾙﾓｰﾀｰ", org: "28100-B2030", rankA: 10000, rankC: 11000, rankD: 12000 },
+    "4432026070": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-26070", rankA: 11000, rankC: 12000, rankD: 13000 },
+    "4432035490": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-35490", rankA: 10500, rankC: 11500, rankD: 12500 },
+    "4432026192": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-26192", rankA: 11000, rankC: 12000, rankD: 13000 },
+    "4432025030": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-25030", rankA: 11000, rankC: 12000, rankD: 13000 },
+    "4431026370": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-26370", rankA: 11000, rankC: 12000, rankD: 13000 },
+    "4431035660": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-35660", rankA: 11000, rankC: 12000, rankD: 13000 },
+    "4431026390": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-26390", rankA: 11000, rankC: 12000, rankD: 13000 },
+    "4431035690": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-35690", rankA: 11000, rankC: 12000, rankD: 13000 },
+    "4431025010": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-25010", rankA: 11000, rankC: 12000, rankD: 13000 },
+    "4431035710": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-35710", rankA: 11000, rankC: 12000, rankD: 13000 },
+    "4431026400": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-26400", rankA: 11000, rankC: 12000, rankD: 13000 },
+    "4431060390": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-60390", rankA: 14000, rankC: 15000, rankD: 16000 },
+    "44310e0240": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-E0240", rankA: 26000, rankC: 28500, rankD: 30000 },
+    "44310e0250": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-E0250", rankA: 26000, rankC: 28500, rankD: 30000 },
+    "44310e0480": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-E0480", rankA: 26000, rankC: 28500, rankD: 30000 },
+    "4431022550": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-22550", rankA: 8000, rankC: 9000, rankD: 10000 },
+    "4431052010": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52010", rankA: 8000, rankC: 9000, rankD: 10000 },
+    "4431052020": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52020", rankA: 8000, rankC: 9000, rankD: 10000 },
+    "4431052050": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52050", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431052150": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52150", rankA: 8500, rankC: 9500, rankD: 10500 },
 
-    "18450e0390": { name: "触媒ｺﾝﾊﾞｰﾀｰ", org: "18450-E0390", rankA: 180000, rankC: 193000, rankD: 193000 },
-    "s1850e0621": { name: "触媒(洗浄ﾘﾋﾞﾙﾄ)", org: "S1850-E0621", rankA: 92700, rankC: 92700, rankD: 101970 },
-    "me361050": { name: "ﾕﾘｱﾓｼﾞｭﾚｰﾀｰ", org: "ME361050", rankA: 88400, rankC: 88400, rankD: 97240 },
-    "4321129026": { name: "ﾌﾛﾝﾄﾅｯｸﾙ", org: "43211-29026", rankA: 28000, rankC: 28000, rankD: 29400 },
-    "23300e0030": { name: "ｻﾌﾟﾗｲﾎﾟﾝﾌﾟ", org: "23300-E0030", rankA: 48000, rankC: 52000, rankD: 55000 },
-    "2367030010": { name: "ｲﾝｼﾞｪｸﾀｰ", org: "23670-30010", rankA: 17500, rankC: 19000, rankD: 20000 },
-    "43410b2330": { name: "ﾄﾞﾗｲﾌﾞｼｬﾌﾄ", org: "43410-B2330", rankA: 7500, rankC: 8500, rankD: 9000 },
-    "17201e0740": { name: "ﾀｰﾎﾞﾁｬｰｼﾞｬｰ", org: "17201-E0740", rankA: 54000, rankC: 59000, rankD: 62000 },
-    "26100e0010": { name: "EGRﾊﾞﾙﾌﾞ", org: "26100-E0010", rankA: 19500, rankC: 21500, rankD: 23000 },
-    "4425026410": { name: "PSﾗｯｸ&ﾋﾟﾆｵﾝ", org: "44250-26410", rankA: 22000, rankC: 24500, rankD: 26000 }
+    // 今回追加のスクショ分！
+    "4431052070": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52070", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431052080": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52080", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431052090": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52090", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431052100": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52100", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431052110": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52110", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431052210": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52210", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431052220": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52220", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431052250": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52250", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431052260": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-52260", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431012140": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12140", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431012150": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12150", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431012210": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12210", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431012220": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12220", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431012170": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12170", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431012180": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12180", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431012190": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12190", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431012200": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12200", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431012110": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12110", rankA: 8000, rankC: 9000, rankD: 10000 },
+    "4431012120": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12120", rankA: 8000, rankC: 9000, rankD: 10000 },
+    "4432012180": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12180", rankA: 8000, rankC: 9000, rankD: 10000 },
+    "4432012240": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12240", rankA: 8000, rankC: 9000, rankD: 10000 },
+    "4432012210": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12210", rankA: 8000, rankC: 9000, rankD: 10000 },
+    "4432012220": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12220", rankA: 8000, rankC: 9000, rankD: 10000 },
+    "4432012230": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12230", rankA: 8000, rankC: 9000, rankD: 10000 },
+    "4431012160": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12160", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431012250": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12250", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431016200": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-16200", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4431012260": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12260", rankA: 8500, rankC: 9500, rankD: 10500 },
+    "4432012190": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12190", rankA: 8000, rankC: 9000, rankD: 10000 },
+    "4431012090": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-12090", rankA: 8000, rankC: 9000, rankD: 10000 }
 };
 
 function judgeWarranty(name) {
     if (name.includes("触媒") || name.includes("ｺﾝﾊﾞｰﾀｰ")) {
         return "初期不良のみ（商品発送日より1週間以内）";
     }
-    if (name.includes("A/C") || name.includes("ｺﾝﾌﾟﾚｯｻｰ") || name.includes("ﾕﾘｱ") || name.includes("ﾀｰﾎﾞ") || name.includes("ｲﾝｼﾞｪｸﾀｰ") || name.includes("ｻﾌﾟﾗｲ")) {
+    if (name.includes("A/C") || name.includes("ｺﾝﾌﾟﾚｯｻｰ") || name.includes("ﾕリア") || name.includes("ﾀｰﾎﾞ") || name.includes("ｲﾝｼﾞｪｸﾀｰ") || name.includes("ｻﾌﾟﾗｲ")) {
         return "1年間又は1万km（いずれか早期到達まで）";
     }
     return "2年間又は2万km（いずれか早期到達まで）";
