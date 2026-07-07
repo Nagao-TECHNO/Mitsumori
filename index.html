@@ -71,7 +71,6 @@
         errorMsg.style.display = 'none';
 
         if (!userRole) {
-            // 合言葉の判定
             if (input === "nagao1" || input === "nagao2" || input === "nagao3" || input === "nagao4") {
                 userRole = input;
                 document.getElementById('input-label').innerText = "純正品番を入力してください";
@@ -101,33 +100,49 @@
                 return;
             }
 
-            // 完全全探索
-            const records = Array.isArray(db) ? db : Object.entries(db);
+            // 【完全解決】キーもデータの中身も両方を完全に保持してリスト化する
+            let records = [];
+            if (Array.isArray(db)) {
+                records = db.map(item => ({ key: "", data: item }));
+            } else if (typeof db === 'object' && db !== null) {
+                records = Object.entries(db).map(([k, v]) => ({ key: k, data: v }));
+            }
 
+            // キー情報も中身の情報もすべて網羅して検索
             for (let record of records) {
-                let data = Array.isArray(db) ? record : record[1];
-                let key = Array.isArray(db) ? "" : record[0];
-
+                const data = record.data;
+                const key = record.key;
                 if (!data) continue;
 
-                const targetCarHinban = cleanString(data.car_hinban || data.car_hinban_cd || "");
+                const targetCarHinban = cleanString(data.car_hinban || "");
+                const targetCarHinbanCd = cleanString(data.car_hinban_cd || "");
+                const targetHinban = cleanString(data.hinban || "");
+                const targetOrg = cleanString(data.org || "");
                 const targetKey = cleanString(key);
 
-                if ((targetCarHinban && targetCarHinban.includes(searchTarget)) || (targetKey && targetKey.includes(searchTarget))) {
+                if (
+                    targetCarHinban.includes(searchTarget) || 
+                    targetCarHinbanCd.includes(searchTarget) || 
+                    targetHinban.includes(searchTarget) ||
+                    targetOrg.includes(searchTarget) ||
+                    targetKey.includes(searchTarget)
+                ) {
                     item = data;
                     break;
                 }
             }
 
             if (item) {
-                const resName = item.hin_sname || item.name || "P/Sﾎﾟﾝﾌﾟ";
-                const resCode = item.car_hinban || item.car_hinban_cd || input;
+                const resName = item.hin_sname || item.name || item.product_name || "P/Sﾎﾟﾝﾌﾟ";
+                const resCode = item.car_hinban || item.car_hinban_cd || item.hinban || input;
                 
                 document.getElementById('res-name').innerText = resName;
                 document.getElementById('res-code').innerText = resCode;
-                document.getElementById('res-warranty').innerText = "2年または2万km"; 
+                
+                let warranty = item.maintenance_period_name || "2年または2万km";
+                if (resName.includes("触媒")) { warranty = "1年または1万km"; }
+                document.getElementById('res-warranty').innerText = warranty;
 
-                // 日本語カラム「ﾗﾝｸA」等にも完全対応
                 const pA = item.ﾗﾝｸA ?? item.ランクA ?? item.a ?? item.A;
                 const pB = item.ﾗﾝｸB ?? item.ランクB ?? item.b ?? item.B;
                 const pC = item.ﾗﾝｸC ?? item.ランクC ?? item.c ?? item.C;
@@ -142,13 +157,17 @@
                     return Number(val).toLocaleString();
                 };
 
-                // nagao3専用の価格出し分け（プランCを表示）
+                // nagao3は完全に「プランC」だけが出るように固定しました
                 if (userRole === "nagao1") {
                     priceHtml = `
                         <div class="price-card"><span class="rank-lbl">優待価格プランA</span><span class="rank-val">¥${formatPrice(pA)}</span></div>
                         <div class="price-card"><span class="rank-lbl">優待価格プランB</span><span class="rank-val">¥${formatPrice(pB)}</span></div>
                     `;
-                } else if (userRole === "nagao2" || userRole === "nagao3") {
+                } else if (userRole === "nagao2") {
+                    priceHtml = `
+                        <div class="price-card"><span class="rank-lbl">優待価格プランB</span><span class="rank-val">¥${formatPrice(pB)}</span></div>
+                    `;
+                } else if (userRole === "nagao3") {
                     priceHtml = `
                         <div class="price-card"><span class="rank-lbl">優待価格プランC</span><span class="rank-val">¥${formatPrice(pC)}</span></div>
                     `;
