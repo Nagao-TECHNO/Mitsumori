@@ -60,6 +60,12 @@
 <script>
     let userRole = ""; // 入力されたパスワードに応じた役割を保存
 
+    // 文字列からハイフン、スペース、アンダースコアを除去して小文字化する共通関数
+    function cleanString(str) {
+        if (!str) return "";
+        return String(str).replace(/[- _]/g, "").toLowerCase();
+    }
+
     function handleAction() {
         const input = document.getElementById('search-input').value.trim();
         const errorMsg = document.getElementById('error-msg');
@@ -70,11 +76,11 @@
         if (!userRole) {
             // パスワード（合言葉）の判定
             if (input === "nagao1" || input === "nagao2" || input === "nagao4") {
-                userRole = input; // 役割を確定
+                userRole = input;
                 document.getElementById('input-label').innerText = "純正品番を入力してください";
                 const searchInput = document.getElementById('search-input');
                 searchInput.value = "";
-                searchInput.placeholder = "例: 44310-12090";
+                searchInput.placeholder = "例: 44320-35620";
                 document.getElementById('action-btn').innerText = "検索";
                 resultBox.style.display = 'none';
             } else {
@@ -89,41 +95,91 @@
                 return;
             }
 
-            const searchKey = input.replace(/[- ]/g, "").toLowerCase();
-            const db = window.PRICE_DATABASE || {};
-            const item = db[searchKey];
+            const searchTarget = cleanString(input);
+            const db = window.PRICE_DATABASE;
+            let item = null;
+
+            if (!db) {
+                errorMsg.innerText = "エラー: data.jsのデータが正しく読み込めていません。";
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            // 【データ構造に依存しない最強の全探索ロジック】
+            // data.jsがオブジェクト型でも配列型でも、どちらでも動くように対応
+            const dataRecords = Array.isArray(db) ? db : Object.entries(db);
+
+            for (let element of dataRecords) {
+                let targetData = null;
+                let keyString = "";
+
+                if (Array.isArray(db)) {
+                    // data.jsが「配列（リスト）」の形をしていた場合
+                    targetData = element;
+                } else {
+                    // data.jsが「オブジェクト（連想配列）」の形をしていた場合
+                    keyString = element[0]; // キー（例: "1_100563_44320-35620"）
+                    targetData = element[1]; // 中身のデータ
+                }
+
+                if (!targetData) continue;
+
+                // データのあらゆる箇所（キー、品番プロパティ、互換品番など）に検索文字が含まれるかチェック
+                const matchInKey = cleanString(keyString).includes(searchTarget);
+                const matchInCarHinban = cleanString(targetData.car_hinban || targetData.car_hinban_cd).includes(searchTarget);
+                const matchInOrg = cleanString(targetData.org || targetData.hinban).includes(searchTarget);
+                const matchInCompatible = cleanString(targetData.compatible_hinban).includes(searchTarget);
+
+                if (matchInKey || matchInCarHinban || matchInOrg || matchInCompatible) {
+                    item = targetData;
+                    break;
+                }
+            }
 
             if (item) {
-                document.getElementById('res-name').innerText = item.name;
-                document.getElementById('res-code').innerText = item.org;
+                // 表示用データの抽出（様々なデータ定義名に対応）
+                const resName = item.name || item.hin_sname || item.product_name || "-";
+                const resCode = item.org || item.car_hinban || item.car_hinban_cd || item.hinban || input;
+                
+                document.getElementById('res-name').innerText = resName;
+                document.getElementById('res-code').innerText = resCode;
                 
                 // 保証期間の自動判定
-                let warranty = "2年または2万km";
-                if (item.name.includes("触媒")) {
+                let warranty = item.maintenance_period_name || "2年または2万km";
+                if (resName.includes("触媒")) {
                     warranty = "1年または1万km";
                 }
                 document.getElementById('res-warranty').innerText = warranty;
                 
-                // 合言葉に応じた価格表示の切り替え
+                // 各ランクの価格を柔軟に取得（大文字・小文字、ランクA、a、ﾗﾝｸAなどに対応）
+                const pA = item.a ?? item.A ?? item.ﾗﾝｸA ?? item.ランクA;
+                const pB = item.b ?? item.B ?? item.ﾗﾝｸB ?? item.ランクB;
+                const pC = item.c ?? item.C ?? item.ﾗﾝｸC ?? item.ランクC;
+                const pD = item.d ?? item.D ?? item.ﾗﾝｸD ?? item.ランクD;
+                const pE = item.e ?? item.E ?? item.ﾗﾝｸE ?? item.ランクE;
+
                 const priceContainer = document.getElementById('price-container');
                 let priceHtml = "";
 
+                const formatPrice = (val) => {
+                    if (val === undefined || val === null || val === "") return "-";
+                    return Number(val).toLocaleString();
+                };
+
+                // パスワードに応じた出し分け
                 if (userRole === "nagao1") {
-                    // ランクA・Bの価格を表示
                     priceHtml = `
-                        <div class="price-card"><span class="rank-lbl">優待価格プランA</span><span class="rank-val">¥${item.a.toLocaleString()}</span></div>
-                        <div class="price-card"><span class="rank-lbl">優待価格プランB</span><span class="rank-val">¥${item.b.toLocaleString()}</span></div>
+                        <div class="price-card"><span class="rank-lbl">優待価格プランA</span><span class="rank-val">¥${formatPrice(pA)}</span></div>
+                        <div class="price-card"><span class="rank-lbl">優待価格プランB</span><span class="rank-val">¥${formatPrice(pB)}</span></div>
                     `;
                 } else if (userRole === "nagao2") {
-                    // ランクCの価格を表示
                     priceHtml = `
-                        <div class="price-card"><span class="rank-lbl">優待価格プランC</span><span class="rank-val">¥${item.c.toLocaleString()}</span></div>
+                        <div class="price-card"><span class="rank-lbl">優待価格プランC</span><span class="rank-val">¥${formatPrice(pC)}</span></div>
                     `;
                 } else if (userRole === "nagao4") {
-                    // ランクD・Eの価格を表示
                     priceHtml = `
-                        <div class="price-card"><span class="rank-lbl">優待価格プランD</span><span class="rank-val">¥${item.d.toLocaleString()}</span></div>
-                        <div class="price-card"><span class="rank-lbl">優待価格プランE</span><span class="rank-val">¥${item.e.toLocaleString()}</span></div>
+                        <div class="price-card"><span class="rank-lbl">優待価格プランD</span><span class="rank-val">¥${formatPrice(pD)}</span></div>
+                        <div class="price-card"><span class="rank-lbl">優待価格プランE</span><span class="rank-val">¥${formatPrice(pE)}</span></div>
                     `;
                 }
 
