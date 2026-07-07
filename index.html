@@ -54,9 +54,9 @@
 </div>
 
 <script>
-// ながおテクノ 単価データベース
+// 正しいエクセルの金額（A/Bなら¥8,000）に修正しました！
 const priceMaster = {
-    "4432022640": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-22640", rankA: 14000, rankC: 15000, rankD: 16000 },
+    "4432022640": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-22640", rankA: 8000, rankC: 9000, rankD: 10000 },
     "4432035620": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-35620", rankA: 7000, rankC: 8000, rankD: 9000 },
     "4432012071": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44320-12071", rankA: 10000, rankC: 11000, rankD: 12000 },
     "4431032300": { name: "P/Sﾎﾟﾝﾌﾟ", org: "44310-32300", rankA: 7000, rankC: 8000, rankD: 9000 },
@@ -100,8 +100,6 @@ function judgeWarranty(name) {
 
 function searchPart() {
     let pass = document.getElementById("passcode").value.toLowerCase().trim();
-    
-    // 入力された品番から文字・ハイフンを完全に消去して小文字化（バグを根本治療）
     let input = document.getElementById("part-number").value.replace(/[^a-zA-Z0-9]/g, "").toLowerCase().trim();
     
     let alertBox = document.getElementById("company-alert"), resultBox = document.getElementById("result-box"), errorBox = document.getElementById("error-box");
