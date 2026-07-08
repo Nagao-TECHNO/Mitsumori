@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>見積もりシステム</title>
+    <title>部品見積もり検索システム</title>
     <style>
         body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
         .box { background: white; padding: 25px; border-radius: 12px; max-width: 500px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
@@ -22,6 +22,7 @@
     <div id="search-ui" style="display:none;">
         <input type="text" id="code" placeholder="品番を入力">
         <button onclick="search()">検索</button>
+        <button onclick="location.reload()" style="background:#6c757d;">終了</button>
         <div id="res" style="margin-top:20px; display:none;"></div>
     </div>
 </div>
@@ -134,9 +135,8 @@
 　　　　{ car_hinban: "44320-16190", hin_sname:　"P/Sﾎﾟﾝﾌﾟ", A: 8000, B: 8000, C: 9000, D: 10000, E: 10000, remark: "2年/2万㎞保証"}
     ];
 
-   function login() {
+    function login() {
         const p = document.getElementById('pass').value.trim();
-        // ログイン判定を修正
         if(p === "nagao1" || p === "nagao2" || p === "nagao3" || p === "nagao4"){
             localStorage.setItem('role', p);
             document.getElementById('login-ui').style.display = 'none';
