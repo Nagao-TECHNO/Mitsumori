@@ -134,13 +134,16 @@
 　　　　{ car_hinban: "44320-16190", hin_sname:　"P/Sﾎﾟﾝﾌﾟ", A: 8000, B: 8000, C: 9000, D: 10000, E: 10000, remark: "2年/2万㎞保証"}
     ];
 
-    function login() {
+   function login() {
         const p = document.getElementById('pass').value.trim();
-        if(["nagao1","nagao2","nagao3","nagao4"].includes(p)){
+        // ログイン判定を修正
+        if(p === "nagao1" || p === "nagao2" || p === "nagao3" || p === "nagao4"){
             localStorage.setItem('role', p);
             document.getElementById('login-ui').style.display = 'none';
             document.getElementById('search-ui').style.display = 'block';
-        } else { alert("合言葉が違います"); }
+        } else {
+            alert("合言葉が違います");
+        }
     }
 
     function search() {
@@ -149,11 +152,11 @@
         const item = DATA.find(d => d.car_hinban === key);
         
         if(item) {
-            let price = "表示不可";
-            if(role == "nagao1") price = "¥" + item.A.toLocaleString();
-            if(role == "nagao2") price = "¥" + item.B.toLocaleString();
-            if(role == "nagao3") price = "¥" + item.C.toLocaleString();
-            if(role == "nagao4") price = "¥" + item.D.toLocaleString();
+            let price = "非公開";
+            if(role === "nagao1") price = "¥" + item.A.toLocaleString();
+            else if(role === "nagao2") price = "¥" + item.B.toLocaleString();
+            else if(role === "nagao3") price = "¥" + item.C.toLocaleString();
+            else if(role === "nagao4") price = "¥" + item.D.toLocaleString();
 
             document.getElementById('res').innerHTML = `
                 <div class="row"><div class="label">品名:</div><b>${item.hin_sname}</b></div>
@@ -163,7 +166,9 @@
                 <div class="row"><div class="label">適合:</div><b>${item.compat}</b></div>
             `;
             document.getElementById('res').style.display = 'block';
-        } else { alert("見つかりません"); }
+        } else {
+            alert("品番が見つかりません");
+        }
     }
 </script>
 </body>
