@@ -22,18 +22,21 @@
     color: #334155;
   }
   
-  /* メインの箱（背景がすりガラス風に透けるおしゃれ設定） */
+   /* メインの箱（透明度を上げて、後ろのイラストをもっと見えやすくしました！） */
   .box { 
-    background: rgba(255, 255, 255, 0.92); 
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    /* 最後の「0.92」から「0.75」に変えることで、白さを薄くして透け感をアップさせています */
+    background: rgba(255, 255, 255, 0.75); 
+    
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     padding: 40px 30px; 
     border-radius: 20px; 
     max-width: 520px; 
     margin: auto; 
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); 
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15); /* 影も少しだけクッキリさせて浮遊感を出しました */
     text-align: center; 
   }
+
   
   /* タイトル */
   h2 {
