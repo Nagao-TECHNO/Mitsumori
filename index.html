@@ -25,12 +25,13 @@
         <button onclick="login()">ログイン</button>
     </div>
 
-    <div id="search-ui" style="display:none;">
-        <input type="text" id="code" placeholder="品番を入力" onkeydown="if(event.key==='Enter'){search()}">>
+     <div id="search-ui" style="display:none;">
+        <input type="text" id="code" placeholder="品番を入力" onkeydown="if(event.key==='Enter'){search()}">
         <button onclick="search()">検索</button>
-        <button onclick="location.reload()" style="background:#6c757d;">終了</button>
+        <button onclick="location.reload()" style="background:#6c757d; margin-left: 8px;">終了</button>
         <div id="res" style="margin-top:20px; display:none;"></div>
     </div>
+
 </div>
 
 <script>
